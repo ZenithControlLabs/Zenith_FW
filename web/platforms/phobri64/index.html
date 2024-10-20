@@ -1,0 +1,133 @@
+<!DOCTYPE html5>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
+    <link rel="stylesheet" href="page.css">
+    <title>Phobri64</title>
+  </head>
+  <body>
+    <div class="parent">
+      <h1 id="app-title"></h1>
+      <!-- PLACEHOLDER DEV TEXT FOR CICD -->
+      <button type="button" onClick="window._fns.connect()">connect controller</button>
+      <div id="disconnect-div" class="dc-or-c-div">
+        <h3 style="color: red">Controller Disconnected</span></h2>
+      </div>
+      <div id="connect-div" class="dc-or-c-div" style="display:none"> 
+        
+        <div>
+          <canvas id="controller-display" width="250" height="250"></canvas></br>
+          <input type="checkbox" id="debug-reporting-checked" onClick="window._fns.updateDbgReporting()" checked> Debug Reporting</input></br>
+          <span id="dbg-text"></span>
+        </div>
+        
+        <div>
+          <div id="standard-div" class="dc-or-c-div">
+            <div id="info-div" class="cal-or-std-div">
+              X: <span id="x-val"></span></br>
+              Y: <span id="y-val"></span></br>
+              <button type="button" onClick="window._fns.startCalib()">start calibration</button> 
+              <button type="button" onClick="window._fns.saveSettings()">save settings</button></br>
+              <button type="button" onClick="window._fns.resetSettings()">reset settings</button></br>
+              </br>
+              <span id="save-indicator-span" class="save-blinker">You have unsaved changes!</span>
+            </div>
+
+            <div class="cal-or-std-div">
+              <ul class="nav nav-tabs" id="myTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link active" id="notchpoints-tab" data-bs-toggle="tab" data-bs-target="#notchpoints" type="button" role="tab" aria-controls="home" aria-selected="true">Notch Points</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link" id="btnremap-tab" data-bs-toggle="tab" data-bs-target="#btnremap" type="button" role="tab" aria-controls="profile" aria-selected="false">Button Remapping</button>
+                </li>
+              </ul>
+              <div class="tab-content" id="myTabContent">
+                <div class="tab-pane fade show active" id="notchpoints" role="tabpanel" aria-labelledby="notchpoints-tab">
+                  <div>
+                    RIGHT: </br>
+                    <div style="display:flex">
+                    X: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-0-x"></input> 
+                    Y: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-0-y"></input> 
+                    ANGLE DEADZONE: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-0-deadzone"></input> 
+                    </div>
+                    UPRIGHT: </br>
+                    <div style="display:flex">
+                    X: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-1-x"></input> 
+                    Y: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-1-y"></input> 
+                    ANGLE DEADZONE: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-1-deadzone"></input> 
+                    </div>
+                    UP: </br>
+                    <div style="display:flex">
+                    X: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-2-x"></input> 
+                    Y: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-2-y"></input> 
+                    ANGLE DEADZONE: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-2-deadzone"></input> 
+                    </div>
+                    UPLEFT: </br>
+                    <div style="display:flex">
+                    X: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-3-x"></input> 
+                    Y: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-3-y"></input> 
+                    ANGLE DEADZONE: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-3-deadzone"></input> 
+                    </div>
+                    LEFT: </br>
+                    <div style="display:flex">
+                    X: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-4-x"></input> 
+                    Y: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-4-y"></input> 
+                    ANGLE DEADZONE: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-4-deadzone"></input> 
+                    </div>
+                    DOWNLEFT: </br>
+                    <div style="display:flex">
+                    X: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-5-x"></input> 
+                    Y: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-5-y"></input> 
+                    ANGLE DEADZONE: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-5-deadzone"></input> 
+                    </div>
+                    DOWN: </br>
+                    <div style="display:flex">
+                    X: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-6-x"></input> 
+                    Y: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-6-y"></input> 
+                    ANGLE DEADZONE: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-6-deadzone"></input> 
+                    </div>
+                    DOWNRIGHT: </br>
+                    <div style="display:flex">
+                    X: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-7-x"></input> 
+                    Y: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-7-y"></input> 
+                    ANGLE DEADZONE: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-7-deadzone"></input> 
+                    </div>
+                  </div>
+                  Magnitude Threshold (%): <input type="text" class="notch-input" onchange="window._fns.updateMagThresh(this)" id="mag-thresh"></input> 
+                </div>
+                <div class="tab-pane fade" id="btnremap" role="tabpanel" aria-labelledby="btnremap-tab">
+                  <select id="Comms-mode" name="Comms Mode" onchange="window._fns.setCommsMode(Number(this.value))">
+                    <option value="0">N64</option>
+                    <option value="1">Gamecube</option>
+                  </select>
+                  <div id="bindings-fill-in"></div>
+                <div id="bindings-div"></div>
+                </div>
+            </div>
+            </div>          
+          </div>
+          <div id="cal-div" class="cal-or-std-div" style="display:none">
+            Calibration: <span id="cal-step"></span>/16</br>
+            <button type="button" onClick="window._fns.prevStep()">prev step</button>
+  
+            
+            <button type="button" onClick="window._fns.nextStep()">next step</button>   
+            
+          </div>
+        </div>
+        
+      </div>
+      
+      <!-- <button type="button" onClick="download()">download report CSV</button> -->
+    </div>
+    <!-- Bootstrap JS -->
+    <script type="module" src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe" crossorigin="anonymous"></script>
+    <script src="zenith_cfg.js"></script>
+    <script type="module" src="main.js"></script>
+  </body>
+  </html>
+  
