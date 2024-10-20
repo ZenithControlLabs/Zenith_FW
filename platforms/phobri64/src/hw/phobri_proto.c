@@ -52,3 +52,10 @@ inline void phobri_proto_core1_inject(analog_data_t *analog_data) {
     update_running_avg(&x_avg, raw_x);
     update_running_avg(&y_avg, raw_y);
 }
+
+void cb_zenith_read_analog_cal(analog_data_t *analog) {
+    analog->ax1 = UINT_N_TO_AX(
+        (uint16_t)(x_avg.running_sum_large >> CALIB_AVG_LEN_BITS), 12);
+    analog->ax2 = UINT_N_TO_AX(
+        (uint16_t)(y_avg.running_sum_large >> CALIB_AVG_LEN_BITS), 12);
+}

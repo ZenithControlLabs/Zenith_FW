@@ -10,7 +10,7 @@ project(Phobri64 C CXX ASM)
 
 pico_sdk_init()
 
-add_subdirectory(lib/Zenith_Lib)
+add_subdirectory(${CMAKE_SOURCE_DIR}/../../lib/ lib)
 
 include_directories(
 	include
@@ -18,8 +18,8 @@ include_directories(
 
 add_executable(${PROJECT_NAME}
 	src/hw/phobri_proto.c
-	src/hw/phobri_v1_X_3d.c
-	src/hw/phobri_v1_X_analog.c
+	src/hw/phobri_v1_0.c
+	src/hw/phobri_v1_1_analog.c
 	src/main.c
 )
 

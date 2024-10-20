@@ -1,3 +1,5 @@
+# WARNING: THIS CODE HASN'T BEEN UPDATED WITH EVERYTHING ELSE. IT MAY OR MAY NOT WORK!
+
 # N64 Remapper
 
 The Zenith Control Labs N64 Remapper is a device that essentially lets you calibrate and adjust any N64 controller. It is an adapter that you plug into your console and plug your controller into, based on the Raspberry Pi Pico hardware. 

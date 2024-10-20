@@ -20,7 +20,7 @@ void process_stick(analog_data_t *in, analog_data_t *out,
     out->ax2 = fmin(1.0, fmax(-1.0, remapped_y));
 }
 
-inline void calib_task(analog_data_t *in, analog_data_t *out) {
+static inline void calib_task(analog_data_t *in, analog_data_t *out) {
     // We will always read the controller. Forget ZTH_STICK_INTERVAL,
     // we are not running any processing that depends on the rate of update,
     // we just need it always updated for raw stick reporting.

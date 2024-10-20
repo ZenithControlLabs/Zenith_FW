@@ -10,7 +10,7 @@ project(N64_Remapper C CXX ASM)
 
 pico_sdk_init()
 
-add_subdirectory(lib/Zenith_Lib)
+add_subdirectory(${CMAKE_SOURCE_DIR}/../../lib/ lib)
 
 include_directories(
 	include
