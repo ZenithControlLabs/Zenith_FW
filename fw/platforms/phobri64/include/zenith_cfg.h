@@ -21,4 +21,17 @@
 #endif
 
 #define ZTH_STICK_INTERVAL 2000
+
+
+typedef struct {
+    int16_t h_x;
+    int16_t h_y;
+    int16_t h_z;
+    int16_t h_temp;
+    uint16_t ax;
+    uint16_t ay;
+} v1_1_datacollect_t;
+
+extern v1_1_datacollect_t dc;
+
 #endif // ZENITH_CFG_H

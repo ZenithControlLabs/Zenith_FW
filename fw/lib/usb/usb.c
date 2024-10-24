@@ -20,8 +20,13 @@ int usb_init(void) {
     return tusb_init();
 }
 
+extern v1_1_datacollect_t dc;
+
 int hid_report(btn_data_t *buttons, analog_data_t *analog,
                analog_data_t *analog_raw) {
+#ifdef HW_PHOBRI_V1_1_DATACOLLECT
+    return tud_hid_report(0x4, &dc, sizeof(dc));
+#else 
     hid_gamepad_report_ext_t report = {.x = (int8_t)(analog->ax1 * 128.0),
                                        .y = (int8_t)(analog->ax2 * -128.0),
                                        .z = (int8_t)(analog->ax3 * 128.0),
@@ -34,6 +39,7 @@ int hid_report(btn_data_t *buttons, analog_data_t *analog,
                                        .ax2_raw = analog_raw->ax2};
 
     return tud_hid_report(0x4, &report, sizeof(hid_gamepad_report_ext_t));
+#endif
 }
 
 void usb_task(uint32_t timestamp, btn_data_t *buttons, analog_data_t *analog,

@@ -20,6 +20,7 @@ add_executable(${PROJECT_NAME}
 	src/hw/phobri_proto.c
 	src/hw/phobri_v1_0.c
 	src/hw/phobri_v1_1_analog.c
+	src/hw/phobri_v1_1_datacollect.c
 	src/main.c
 )
 

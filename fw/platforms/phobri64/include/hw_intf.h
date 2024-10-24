@@ -19,8 +19,12 @@ void phobri_v1_0_read_analog(analog_data_t *analog);
 #define HW_READ_ANALOG phobri_v1_1_analog_read_analog
 void phobri_v1_1_analog_core1_init(void);
 void phobri_v1_1_analog_read_analog(analog_data_t *analog);
-#elif defined(HW_PHOBRI_v1_1_DATACOLLECT)
-#error "TODO"
+#elif defined(HW_PHOBRI_V1_1_DATACOLLECT)
+#include "hw/phobri_v1_X.h"
+#define HW_CORE1_INIT phobri_v1_1_datacollect_core1_init
+#define HW_READ_ANALOG phobri_v1_1_datacollect_read_analog
+void phobri_v1_1_datacollect_core1_init(void);
+void phobri_v1_1_datacollect_read_analog(analog_data_t *analog);
 #else
 #error "No valid HW target defined!"
 #endif
