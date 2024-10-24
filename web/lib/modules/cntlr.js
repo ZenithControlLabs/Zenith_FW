@@ -4,7 +4,7 @@
 import { sleep_ms } from "./utils.js";
 import { calStep } from "./zenith_calib.js";
 import { updateInputDisplay } from "./zenith_input.js";
-import { placeMagThresh, placeNotches } from "./zenith_notch.js";
+import { placeGateLimiter, placeMagThresh, placeNotches } from "./zenith_notch.js";
 import { CommsMode, _commsMode, placeRemapping, setCommsMode } from "./zenith_remap.js";
 
 const filters = {filters: [{
@@ -25,6 +25,8 @@ export const WebUSBCmdMap = {
     REMAP_GET: 0xA5,
     MAG_THRESH_SET: 0x06,
     MAG_THRESH_GET: 0xA6,
+    GATE_LIMITER_SET: 0x07,
+    GATE_LIMITER_GET: 0xA7,
     UPDATE_FW: 0xF1,
     COMMIT_SETTINGS: 0xF2,
     RESET_SETTINGS: 0xF3
@@ -169,6 +171,10 @@ const listen = async () => {
                 placeMagThresh(result.data);
                 break;
             }
+            case WebUSBCmdMap.GATE_LIMITER_GET: {
+                placeGateLimiter(result.data);
+                break;
+            }
             case WebUSBCmdMap.FW_GET: {
                 placeVersion(result.data);
                 break;
@@ -202,6 +208,8 @@ async function loadAllSettings() {
     await sleep_ms(50);
     await writeUSBCmd(WebUSBCmdMap.MAG_THRESH_GET);
     await sleep_ms(100);
+    await writeUSBCmd(WebUSBCmdMap.GATE_LIMITER_GET);
+    await sleep_ms(100);
     await setCommsMode(CommsMode.N64);
 }
 
@@ -213,7 +221,7 @@ async function loadVersion() {
 function placeVersion(data) {
     let versionElem = /** @type {HTMLInputElement} */ (document.getElementById(`version-text`)); 
     let versionMaj = data.getUint8(2);
-    let versionMin = (data.getUint8(1) >> 8) & 0xF;
+    let versionMin = (data.getUint8(1) >> 4) & 0xF;
     let versionPatch = data.getUint8(1) & 0xF;
     let i = 0;
     let commit = "";

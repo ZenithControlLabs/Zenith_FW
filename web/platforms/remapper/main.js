@@ -15,7 +15,8 @@ window._fns = {
     setCommsMode,
     updateNotchPoint,
     updateDbgReporting,
-    updateMagThresh
+    updateMagThresh,
+    updateGateLimiter
 };
 
 ///////////

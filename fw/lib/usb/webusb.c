@@ -54,7 +54,7 @@ void webusb_command_processor(uint8_t *data) {
     case WEBUSB_CMD_FW_GET: {
         _webusb_out_buffer[0] = WEBUSB_CMD_FW_GET;
         _webusb_out_buffer[2] = ZTH_FW_MAJOR;
-        _webusb_out_buffer[1] = (ZTH_FW_MINOR << 8) | (ZTH_FW_PATCH & 0xFF);
+        _webusb_out_buffer[1] = (ZTH_FW_MINOR << 4) | (ZTH_FW_PATCH & 0xF);
         size_t verslen = strlen(git_version);
         if (verslen < (64 - 3)) {
             memcpy(_webusb_out_buffer+3, git_version, verslen+1);
@@ -186,6 +186,23 @@ void webusb_command_processor(uint8_t *data) {
         _webusb_out_buffer[0] = WEBUSB_CMD_MAG_THRESH_GET;
         memcpy(_webusb_out_buffer + 4, &_settings.stick_config.mag_threshold,
                sizeof(float));
+
+        if (webusb_ready_blocking(5000)) {
+            tud_vendor_n_write(0, _webusb_out_buffer, 64);
+            tud_vendor_n_flush(0);
+        }
+    } break;
+
+    case WEBUSB_CMD_GATE_LIMITER_SET: {
+        debug_print("WebUSB: Got Gate Limiter SET command.\n");
+        memcpy(&_settings.gate_limiter_enable, data + 1, sizeof(bool));
+    } break;
+
+    case WEBUSB_CMD_GATE_LIMITER_GET: {
+        debug_print("WebUSB: Got Gate Limiter GET command.\n");
+        _webusb_out_buffer[0] = WEBUSB_CMD_GATE_LIMITER_GET;
+        memcpy(_webusb_out_buffer + 1, &_settings.gate_limiter_enable,
+               sizeof(bool));
 
         if (webusb_ready_blocking(5000)) {
             tud_vendor_n_write(0, _webusb_out_buffer, 64);

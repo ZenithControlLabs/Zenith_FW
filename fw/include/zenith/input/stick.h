@@ -26,6 +26,7 @@ typedef struct {
 } stick_config_t;
 
 void process_stick(analog_data_t *in, analog_data_t *out,
+                   const bool gate_limiter_enable,
                    const calib_results_t *calib_results,
                    const stick_config_t *stick_config);
 

@@ -67,7 +67,8 @@ void notch_snap(const ax_t x_in, const ax_t y_in, ax_t *x_out, ax_t *y_out,
     }
 }
 
-void notch_remap(const ax_t x_in, const ax_t y_in, ax_t *x_out, ax_t *y_out,
+void notch_remap(const ax_t x_in, const ax_t y_in, ax_t *x_out, ax_t *y_out,  
+                 const bool gate_limiter_enable,
                  const calib_results_t *calib_results,
                  const stick_config_t *stick_config) {
     // determine the angle between the x unit vector and the current position
@@ -100,6 +101,8 @@ void notch_remap(const ax_t x_in, const ax_t y_in, ax_t *x_out, ax_t *y_out,
                region, angle);
     // debug_print("time: %d\n", time_us_32() - thing);
 
+
+
     // Apply the affine transformation using the coefficients found during
     // calibration
     // Note the lack of translation. This is due to assuming center = 0.
@@ -107,6 +110,20 @@ void notch_remap(const ax_t x_in, const ax_t y_in, ax_t *x_out, ax_t *y_out,
              calib_results->affine_coeffs[region][1] * y_in_adj;
     *y_out = calib_results->affine_coeffs[region][2] * x_in_adj +
              calib_results->affine_coeffs[region][3] * y_in_adj;
+
+    if (gate_limiter_enable) {
+        int next_region = (region == (NUM_NOTCHES - 1)) ? 0 : (region + 1);
+        float x0 = stick_config->notch_points_x[region];
+        float y0 = stick_config->notch_points_y[region];
+        float xf = stick_config->notch_points_x[next_region];
+        float yf = stick_config->notch_points_y[next_region];
+        float minv = (xf-x0)/(yf-y0);
+        float xp = (*y_out - y0) * minv + x0;
+
+        if (fabs(*x_out) >= fabs(xp) && signbit(*x_out) == signbit(xp)) {
+            *x_out = xp;
+        }
+    }
 }
 
 // Multiply two 3x3 matrices

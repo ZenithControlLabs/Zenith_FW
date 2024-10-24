@@ -98,7 +98,8 @@
                     ANGLE DEADZONE: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-7-deadzone"></input> 
                     </div>
                   </div>
-                  Magnitude Threshold (%): <input type="text" class="notch-input" onchange="window._fns.updateMagThresh(this)" id="mag-thresh"></input> 
+                  Magnitude Threshold (%): <input type="text" class="notch-input" onchange="window._fns.updateMagThresh(this)" id="mag-thresh"></input> </br>
+                  Enable X-axis Gate Limiter: <input type="checkbox" onchange="window._fns.updateGateLimiter(this)" id="gate-limiter-enable"></input> 
                 </div>
                 <div class="tab-pane fade" id="btnremap" role="tabpanel" aria-labelledby="btnremap-tab">
                   <select id="Comms-mode" name="Comms Mode" onchange="window._fns.setCommsMode(Number(this.value))">

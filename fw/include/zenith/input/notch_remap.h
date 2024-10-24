@@ -4,6 +4,7 @@
 #include "zenith/input/stick.h"
 
 void notch_remap(const ax_t x_in, const ax_t y_in, ax_t *x_out, ax_t *y_out,
+                 const bool gate_limiter_enable,
                  const calib_results_t *calib_results,
                  const stick_config_t *stick_config);
 

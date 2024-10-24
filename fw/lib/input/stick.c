@@ -1,6 +1,7 @@
 #include "zenith/includes.h"
 
 void process_stick(analog_data_t *in, analog_data_t *out,
+                   const bool gate_limiter_enable,
                    const calib_results_t *calib_results,
                    const stick_config_t *stick_config) {
 
@@ -14,7 +15,7 @@ void process_stick(analog_data_t *in, analog_data_t *out,
 
     ax_t remapped_x, remapped_y;
     notch_remap(notch_remap_in_x, notch_remap_in_y, &remapped_x, &remapped_y,
-                calib_results, stick_config);
+                gate_limiter_enable, calib_results, stick_config);
 
     out->ax1 = fmin(1.0, fmax(-1.0, remapped_x));
     out->ax2 = fmin(1.0, fmax(-1.0, remapped_y));
@@ -62,6 +63,6 @@ void stick_task(uint32_t timestamp, analog_data_t *in, analog_data_t *out) {
         return;
 
     cb_zenith_read_analog(in);
-    process_stick(in, out, &(_settings.calib_results),
+    process_stick(in, out, _settings.gate_limiter_enable, &(_settings.calib_results),
                   &(_settings.stick_config));
 }

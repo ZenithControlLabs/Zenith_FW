@@ -76,6 +76,18 @@ export async function updateMagThresh(elemName) {
     buf[0] = WebUSBCmdMap.MAG_THRESH_SET;
     console.log(buf);
     await usbDevice.transferOut(2, buf);
+    setSaveIndicator();
+}
+
+export async function updateGateLimiter(elemName) {
+    let new_status = elemName.checked ? 1 : 0;
+    console.log(new_status);
+    let buf = new ArrayBuffer(2);
+    buf = (new Uint8Array(buf));
+    buf[0] = WebUSBCmdMap.GATE_LIMITER_SET;
+    buf[1] = new_status;
+    await usbDevice.transferOut(2, buf);
+    setSaveIndicator();
 }
 
 export function placeNotches(data) {
@@ -93,4 +105,13 @@ export function placeNotches(data) {
 export function placeMagThresh(data) {
     let mag_thresh_input = /** @type {HTMLInputElement} */ (document.getElementById(`mag-thresh`)); 
     mag_thresh_input.value = (100. * IntToFloat32(swap32(data.getUint32(4)))).toFixed(2);
+}
+
+export function placeGateLimiter(data) {
+    let gate_limiter_enable = /** @type {HTMLInputElement} */ (document.getElementById(`gate-limiter-enable`)); 
+    if (data.getUint8(1)) {
+        gate_limiter_enable.checked = true;
+    } else {
+        gate_limiter_enable.checked = false;
+    }
 }

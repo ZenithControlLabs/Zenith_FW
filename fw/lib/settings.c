@@ -37,6 +37,7 @@ void settings_reset_to_factory() {
         .btn_remap_profile_gamecube = {
             .p = ZTH_GAMECUBE_REMAP_DEFAULT
         },
+        .gate_limiter_enable = false,
         .user_settings = {0}
     };
     // clang-format on
