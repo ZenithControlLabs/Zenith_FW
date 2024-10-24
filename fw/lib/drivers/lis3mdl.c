@@ -8,7 +8,7 @@ void lis3mdl_setup(i2c_inst_t *i2c, uint addr) {
     uint8_t ctrl_reg1_cfg[] = {0x20, 0b00000010};
     // Full scale +/- 4G
     // Not needed for now because matches default
-    // uint8_t ctrl_reg2_cfg[] = {0x21, 0b00000000};
+    uint8_t ctrl_reg2_cfg[] = {0x21, 0b01100000};
     // Continuous measurement
     uint8_t ctrl_reg3_cfg[] = {0x22, 0b00000000};
     // LP mode on Z-axis as well
@@ -16,6 +16,7 @@ void lis3mdl_setup(i2c_inst_t *i2c, uint addr) {
     // uint8_t ctrl_reg4_cfg[] = {0x23, 0b00000000};
 
     i2c_write_blocking(i2c, addr, ctrl_reg1_cfg, 2, false);
+    i2c_write_blocking(i2c, addr, ctrl_reg2_cfg, 2, false);
     i2c_write_blocking(i2c, addr, ctrl_reg3_cfg, 2, false);
 }
 

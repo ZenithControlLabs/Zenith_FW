@@ -1,5 +1,5 @@
 {
-    "cmake.sourceDirectory": "/home/panther/code/ZCL/Zenith_FW/platforms/phobri64",
+    "cmake.sourceDirectory": "/home/panther/code/ZCL/Zenith_FW/fw/platforms/phobri64",
     "files.associations": {
         "*.md": "markdown",
         "*.bsv": "bluespec",
@@ -8,6 +8,9 @@
         "phobri_proto.h": "c",
         "types.h": "c",
         "includes.h": "c",
-        "lis3mdl.h": "c"
+        "lis3mdl.h": "c",
+        "hw_intf.h": "c",
+        "phobri_v1_x.h": "c",
+        "zenith.h": "c"
     }
 }
