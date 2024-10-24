@@ -26,10 +26,6 @@ jobs:
         with:
           fetch-depth: 1  # Only fetch the latest commit
 
-      - name: Set up CNAME for custom domain
-        run: |
-          echo "zenithcontrollabs.github.io" > ./web/CNAME  # Write custom domain to CNAME file
-
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
