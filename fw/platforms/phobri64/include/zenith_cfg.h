@@ -1,7 +1,7 @@
 #ifndef ZENITH_CFG_H
 #define ZENITH_CFG_H
 
-#define ZTH_WEBUSB_URL "zenithcontrollabs.github.io/Phobri64_GUI"
+#define ZTH_WEBUSB_URL "zenithcontrollabs.github.io/Zenith_FW/web/platforms/phobri64"
 #define ZTH_MANUFACTURER "Zenith Control Labs"
 #define ZTH_PRODUCT "Phobri64"
 
