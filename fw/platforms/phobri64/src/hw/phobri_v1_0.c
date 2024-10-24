@@ -5,8 +5,6 @@
 
 #include <stdint.h>
 
-
-
 lis3mdl_reading_t reading_hx;
 lis3mdl_reading_t reading_hy;
 

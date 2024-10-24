@@ -22,7 +22,7 @@ void phobri_v1_1_analog_core1_init(void) {
     gpio_set_function(STICK_I2C_SCL, GPIO_FUNC_I2C);
     gpio_set_function(STICK_I2C_SDA, GPIO_FUNC_I2C);
 
-    ads7142_setup(STICK_I2C_INTF, I2C_HALL_ADDR);
+    ads7142_setup(STICK_I2C_INTF, I2C_ADC_ADDR);
 
     init_running_avg(&x_avg, CALIB_AVG_LEN_BITS, NORMAL_AVG_LEN_BITS);
     init_running_avg(&y_avg, CALIB_AVG_LEN_BITS, NORMAL_AVG_LEN_BITS);
@@ -32,14 +32,14 @@ void phobri_v1_1_analog_core1_init(void) {
 }
 
 void phobri_v1_1_analog_read_analog(analog_data_t *analog_data) {
-    ads7142_read(STICK_I2C_INTF, I2C_HALL_ADDR, &reading);
+    ads7142_read(STICK_I2C_INTF, I2C_ADC_ADDR, &reading);
     update_running_avg(&x_avg, reading.a_x);
     update_running_avg(&y_avg, reading.a_y);
 
     analog_data->ax1 = UINT_N_TO_AX(
-        (uint16_t)(x_avg.running_sum_small >> NORMAL_AVG_LEN_BITS), 12);
+        (uint16_t)(x_avg.running_sum_small >> NORMAL_AVG_LEN_BITS), 16);
     analog_data->ax2 = UINT_N_TO_AX(
-        (uint16_t)(y_avg.running_sum_small >> NORMAL_AVG_LEN_BITS), 12);
+        (uint16_t)(y_avg.running_sum_small >> NORMAL_AVG_LEN_BITS), 16);
 }
 
 /*void phobri_v1_1_analog_read_cal(analog_data_t *analog) {
