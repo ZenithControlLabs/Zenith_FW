@@ -3,9 +3,12 @@
 
 #include "zenith/drivers/lis3mdl.h"
 
-void lis3mdl_setup(i2c_inst_t *i2c, uint addr) {
+void lis3mdl_setup(i2c_inst_t *i2c, uint addr, bool temp_en) {
     // Temp disabled, LP mode w/ FAST_ODR @ 1kHZ
     uint8_t ctrl_reg1_cfg[] = {0x20, 0b00000010};
+    if (temp_en) {
+        ctrl_reg1_cfg[1] |= 0b10000000;
+    }
     // Full scale +/- 4G
     // Not needed for now because matches default
     uint8_t ctrl_reg2_cfg[] = {0x21, 0b01100000};
@@ -20,7 +23,7 @@ void lis3mdl_setup(i2c_inst_t *i2c, uint addr) {
     i2c_write_blocking(i2c, addr, ctrl_reg3_cfg, 2, false);
 }
 
-void __time_critical_func(lis3mdl_read)(i2c_inst_t *i2c, uint addr, lis3mdl_reading_t *dest) {
+void __time_critical_func(lis3mdl_read)(i2c_inst_t *i2c, uint addr, lis3mdl_reading_t *dest, bool read_temp) {
 
     uint8_t regl;
     uint8_t regh;
@@ -49,4 +52,14 @@ void __time_critical_func(lis3mdl_read)(i2c_inst_t *i2c, uint addr, lis3mdl_read
     i2c_write_blocking(i2c, addr, &regh, 1, true);
     i2c_read_blocking(i2c, addr, (read_buf + 1), 1, false);
     dest->h_z = (read_buf[1] << 8) + read_buf[0];
+
+    if (read_temp) {
+        regl = 0x2e;
+        regh = 0x2f;
+        i2c_write_blocking(i2c, addr, &regl, 1, true);
+        i2c_read_blocking(i2c, addr, read_buf, 1, false);
+        i2c_write_blocking(i2c, addr, &regh, 1, true);
+        i2c_read_blocking(i2c, addr, (read_buf + 1), 1, false);
+        dest->h_temp = (read_buf[1] << 8) + read_buf[0]; 
+    }
 }
