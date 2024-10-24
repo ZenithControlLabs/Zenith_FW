@@ -21,6 +21,7 @@ add_executable(${PROJECT_NAME}
 	src/main.c
 )
 
+include(../../lib/git_version.cmake)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mcpu=cortex-m0")
 
 target_compile_definitions(${PROJECT_NAME}

@@ -125,7 +125,7 @@ async function initWebUSBDevice () {
         }, 50);
         
     await loadAllSettings();
-        
+    await loadVersion();
     }
     catch (error) {
         window.alert(`Could not initialize WebUSB for ${productName} device`);
@@ -169,6 +169,10 @@ const listen = async () => {
                 placeMagThresh(result.data);
                 break;
             }
+            case WebUSBCmdMap.FW_GET: {
+                placeVersion(result.data);
+                break;
+            }
         }
     }
 }
@@ -199,4 +203,24 @@ async function loadAllSettings() {
     await writeUSBCmd(WebUSBCmdMap.MAG_THRESH_GET);
     await sleep_ms(100);
     await setCommsMode(CommsMode.N64);
+}
+
+async function loadVersion() {
+    await writeUSBCmd(WebUSBCmdMap.FW_GET);
+    await sleep_ms(100);
+}
+
+function placeVersion(data) {
+    let versionElem = /** @type {HTMLInputElement} */ (document.getElementById(`version-text`)); 
+    let versionMaj = data.getUint8(2);
+    let versionMin = (data.getUint8(1) >> 8) & 0xF;
+    let versionPatch = data.getUint8(1) & 0xF;
+    let i = 0;
+    let commit = "";
+    while (data.getUint8(3 + i) != 0 && i < 64) {
+        commit += String.fromCharCode(data.getUint8(3+i));
+        i++;
+    }
+    if (commit == "") { commit = "?" }
+    versionElem.textContent = `Version: v${versionMaj}.${versionMin}.${versionPatch} (commit ${commit})`;
 }

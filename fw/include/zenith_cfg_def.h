@@ -22,18 +22,6 @@
 #define ZTH_PID 0x0000
 #endif
 
-#ifndef ZTH_FW_MAJOR
-#define ZTH_FW_MAJOR 0
-#endif
-
-#ifndef ZTH_FW_MINOR
-#define ZTH_FW_MINOR 0
-#endif
-
-#ifndef ZTH_FW_PATCH
-#define ZTH_FW_PATCH 0
-#endif
-
 #ifndef ZTH_LINEARIZATION_EN
 #define ZTH_LINEARIZATION_EN 1
 #endif

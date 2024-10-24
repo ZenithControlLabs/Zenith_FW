@@ -1,5 +1,7 @@
 #include "zenith/includes.h"
 
+const char* git_version = GIT_VERSION;
+
 uint8_t _webusb_out_buffer[64] = {0x00};
 bool _webusb_output_enabled = false;
 int _webusb_output_cnt = 0;
@@ -53,6 +55,10 @@ void webusb_command_processor(uint8_t *data) {
         _webusb_out_buffer[0] = WEBUSB_CMD_FW_GET;
         _webusb_out_buffer[2] = ZTH_FW_MAJOR;
         _webusb_out_buffer[1] = (ZTH_FW_MINOR << 8) | (ZTH_FW_PATCH & 0xFF);
+        size_t verslen = strlen(git_version);
+        if (verslen < (64 - 3)) {
+            memcpy(_webusb_out_buffer+3, git_version, verslen+1);
+        }
         if (webusb_ready_blocking(5000)) {
             tud_vendor_n_write(0, _webusb_out_buffer, 64);
             tud_vendor_n_flush(0);
