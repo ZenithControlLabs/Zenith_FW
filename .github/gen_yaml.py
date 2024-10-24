@@ -7,9 +7,8 @@ with open("workflows/main.yml", mode="w") as f:
     f.write(template.render(
         {
             "buildconfigs": [
-                { "name": "proto",  "cmake_opts": "-DCMAKE_C_FLAGS=-DHW_PHOBRI_PROTO"},
-                { "name": "v1_X_3d",  "cmake_opts": "-DCMAKE_C_FLAGS=-DHW_PHOBRI_V1_X_3D"},
-                { "name": "v1_X_analog",  "cmake_opts": "-DCMAKE_C_FLAGS=-DHW_PHOBRI_V1_X_ANALOG"},
+                { "name": "v1_0",  "cmake_opts": "-DCMAKE_C_FLAGS=-DHW_PHOBRI_V1_0"},
+                { "name": "v1_1_analog",  "cmake_opts": "-DCMAKE_C_FLAGS=-DHW_PHOBRI_V1_1_ANALOG"},
             ]
         }
     ))
