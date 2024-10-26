@@ -113,6 +113,54 @@ jobs:
         path: build/Phobri64.uf2
         if-no-files-found: error
 
+  build-remapper:  
+    runs-on: ubuntu-latest
+    container: xingrz/rpi-pico-builder:latest
+    steps:
+
+    - name: Install git
+      run: |
+        apt update
+        apt install -y git
+        
+    - uses: actions/checkout@v3
+      name: Clone Phobri repo
+      with:
+        submodules: true
+
+    - name: Clone Pico SDK
+      uses: suisei-cn/actions-download-file@v1
+      id: pico-sdk
+      with:
+        url: https://codeload.github.com/raspberrypi/pico-sdk/tar.gz/refs/tags/1.5.1
+        target: assets
+
+    - name: Clone TinyUSB 
+      uses: suisei-cn/actions-download-file@v1
+      id: tinyusb
+      with:
+        url: https://codeload.github.com/hathach/tinyusb/tar.gz/refs/tags/0.15.0
+        target: assets
+
+    - name: Untar Pico SDK
+      run: |
+        tar xvf assets/${{ steps.pico-sdk.outputs.filename }} --transform 's/pico-sdk-1.5.1//' -C $PICO_SDK_PATH
+        tar xvf assets/${{ steps.tinyusb.outputs.filename }} --transform 's/tinyusb-0.15.0//' -C $PICO_SDK_PATH/lib/tinyusb
+
+    - name: Configure CMake
+      run: cmake -S fw/platforms/remapper -B build  -DCMAKE_BUILD_TYPE=Release
+
+    - name: Build
+      # Build your program with the given configuration
+      run: cmake --build build
+
+    - name: Upload remapper UF2
+      uses: actions/upload-artifact@v3
+      with:
+        name: remapper_uf2
+        path: build/N64_Remapper.uf2
+        if-no-files-found: error
+
 
   deploy:
     runs-on: ubuntu-latest
@@ -121,6 +169,8 @@ jobs:
       - build-v1_0
 
       - build-v1_1_analog
+
+      - build-remapper
 
     if: startsWith(github.ref, 'refs/tags/')
     steps:
@@ -137,6 +187,8 @@ jobs:
         
           mv v1_1_analog_uf2/Phobri64.uf2 ./Phobri64_${{ github.ref_name }}_v1_1_analog.uf2
         
+          mv remapper_uf2/N64_Remapper.uf2 ./N64_Remapper_${{ github.ref_name }}_remapper.uf2
+        
 
       - name: Push to release
         uses: softprops/action-gh-release@v1
@@ -145,4 +197,5 @@ jobs:
             files: |
               Phobri64_${{ github.ref_name }}_v1_0.uf2
               Phobri64_${{ github.ref_name }}_v1_1_analog.uf2
+              N64_Remapper_${{ github.ref_name }}_remapper.uf2
               

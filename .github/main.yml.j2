@@ -52,7 +52,7 @@ jobs:
         tar xvf assets/{% raw %}${{ steps.tinyusb.outputs.filename }}{% endraw %} --transform 's/tinyusb-0.15.0//' -C $PICO_SDK_PATH/lib/tinyusb
 
     - name: Configure CMake
-      run: cmake -S fw/platforms/phobri64 -B build {{config.cmake_opts}} -DCMAKE_BUILD_TYPE=Release
+      run: cmake -S fw/platforms/{{config.platform}} -B build {{config.cmake_opts}} -DCMAKE_BUILD_TYPE=Release
 
     - name: Build
       # Build your program with the given configuration
@@ -62,7 +62,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: {{config.name}}_uf2
-        path: build/Phobri64.uf2
+        path: build/{{name2uf2[config.platform]}}.uf2
         if-no-files-found: error
 {% endfor %}
 
@@ -83,7 +83,7 @@ jobs:
       - name: Move around files
         run: |
         {% for config in buildconfigs %}
-          mv {{config.name}}_uf2/Phobri64.uf2 ./Phobri64_{% raw %}${{ github.ref_name }}{% endraw %}_{{config.name}}.uf2
+          mv {{config.name}}_uf2/{{name2uf2[config.platform]}}.uf2 ./{{name2uf2[config.platform]}}_{% raw %}${{ github.ref_name }}{% endraw %}_{{config.name}}.uf2
         {% endfor %}
 
       - name: Push to release
@@ -92,5 +92,5 @@ jobs:
         with:
             files: |
               {% for config in buildconfigs -%}
-              Phobri64_{% raw %}${{ github.ref_name }}{% endraw %}_{{config.name}}.uf2
+              {{name2uf2[config.platform]}}_{% raw %}${{ github.ref_name }}{% endraw %}_{{config.name}}.uf2
               {% endfor %}

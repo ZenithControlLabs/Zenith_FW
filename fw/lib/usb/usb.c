@@ -20,8 +20,6 @@ int usb_init(void) {
     return tusb_init();
 }
 
-extern v1_1_datacollect_t dc;
-
 int hid_report(btn_data_t *buttons, analog_data_t *analog,
                analog_data_t *analog_raw) {
 #ifdef HW_PHOBRI_V1_1_DATACOLLECT
