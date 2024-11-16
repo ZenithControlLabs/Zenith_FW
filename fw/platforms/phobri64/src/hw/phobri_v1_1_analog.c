@@ -33,13 +33,11 @@ void phobri_v1_1_analog_core1_init(void) {
 
 void phobri_v1_1_analog_read_analog(analog_data_t *analog_data) {
     ads7142_read(STICK_I2C_INTF, I2C_ADC_ADDR, &reading);
-    update_running_avg(&adc_x_avg, reading.a_x);
-    update_running_avg(&adc_y_avg, reading.a_y);
+    //update_running_avg(&adc_x_avg, reading.a_x);
+    //update_running_avg(&adc_y_avg, reading.a_y);
 
-    analog_data->ax1 = UINT_N_TO_AX(
-        (uint16_t)(adc_x_avg.running_sum_small >> NORMAL_AVG_LEN_BITS), 16);
-    analog_data->ax2 = UINT_N_TO_AX(
-        (uint16_t)(adc_y_avg.running_sum_small >> NORMAL_AVG_LEN_BITS), 16);
+    analog_data->ax1 = UINT_N_TO_AX(reading.a_x, 16);
+    analog_data->ax2 = UINT_N_TO_AX(reading.a_y, 16);
 }
 
 /*void phobri_v1_1_analog_read_cal(analog_data_t *analog) {
