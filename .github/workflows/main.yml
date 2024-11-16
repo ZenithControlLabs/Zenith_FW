@@ -53,7 +53,7 @@ jobs:
 
     - name: Configure CMake
       run: |
-        git describe --abbrev=7 --dirty --always --tags
+        git config --global --add safe.directory $(pwd)
         cmake -S fw/platforms/phobri64 -B build -DCMAKE_C_FLAGS=-DHW_PHOBRI_V1_0 -DCMAKE_BUILD_TYPE=Release
 
     - name: Build
@@ -102,7 +102,9 @@ jobs:
         tar xvf assets/${{ steps.tinyusb.outputs.filename }} --transform 's/tinyusb-0.15.0//' -C $PICO_SDK_PATH/lib/tinyusb
 
     - name: Configure CMake
-      run: cmake -S fw/platforms/phobri64 -B build -DCMAKE_C_FLAGS=-DHW_PHOBRI_V1_1_ANALOG -DCMAKE_BUILD_TYPE=Release
+      run: |
+        git config --global --add safe.directory $(pwd)
+        cmake -S fw/platforms/phobri64 -B build -DCMAKE_C_FLAGS=-DHW_PHOBRI_V1_1_ANALOG -DCMAKE_BUILD_TYPE=Release
 
     - name: Build
       # Build your program with the given configuration
@@ -150,7 +152,9 @@ jobs:
         tar xvf assets/${{ steps.tinyusb.outputs.filename }} --transform 's/tinyusb-0.15.0//' -C $PICO_SDK_PATH/lib/tinyusb
 
     - name: Configure CMake
-      run: cmake -S fw/platforms/remapper -B build  -DCMAKE_BUILD_TYPE=Release
+      run: |
+        git config --global --add safe.directory $(pwd)
+        cmake -S fw/platforms/remapper -B build  -DCMAKE_BUILD_TYPE=Release
 
     - name: Build
       # Build your program with the given configuration

@@ -52,7 +52,9 @@ jobs:
         tar xvf assets/{% raw %}${{ steps.tinyusb.outputs.filename }}{% endraw %} --transform 's/tinyusb-0.15.0//' -C $PICO_SDK_PATH/lib/tinyusb
 
     - name: Configure CMake
-      run: cmake -S fw/platforms/{{config.platform}} -B build {{config.cmake_opts}} -DCMAKE_BUILD_TYPE=Release
+      run: |
+        git config --global --add safe.directory $(pwd)
+        cmake -S fw/platforms/{{config.platform}} -B build {{config.cmake_opts}} -DCMAKE_BUILD_TYPE=Release
 
     - name: Build
       # Build your program with the given configuration
