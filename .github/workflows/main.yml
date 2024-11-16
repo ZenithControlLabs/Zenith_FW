@@ -52,7 +52,9 @@ jobs:
         tar xvf assets/${{ steps.tinyusb.outputs.filename }} --transform 's/tinyusb-0.15.0//' -C $PICO_SDK_PATH/lib/tinyusb
 
     - name: Configure CMake
-      run: cmake -S fw/platforms/phobri64 -B build -DCMAKE_C_FLAGS=-DHW_PHOBRI_V1_0 -DCMAKE_BUILD_TYPE=Release
+      run: |
+        git describe --abbrev=7 --dirty --always --tags
+        cmake -S fw/platforms/phobri64 -B build -DCMAKE_C_FLAGS=-DHW_PHOBRI_V1_0 -DCMAKE_BUILD_TYPE=Release
 
     - name: Build
       # Build your program with the given configuration
