@@ -12,6 +12,10 @@ void zenith_loop_core0(void) {
     for (;;) {
         atomic_store(&_timestamp, time_us_32());
 
+#ifdef ZENITH_SWITCHER
+        atomic_store(&_profile, cb_zenith_read_controller_switch());
+#endif
+
         cb_zenith_read_buttons(&_buttons);
         btn_remap_task(&_buttons, &_buttons_processed);
 
@@ -27,9 +31,21 @@ void zenith_loop_core0(void) {
 
 void zenith_loop_core1(void) {
     cb_zenith_core1_init();
+#ifdef ZENITH_SWITCHER
+    int last_profile = _profile;
+#endif
 
     for (;;) {
         settings_core1_handle_commit();
+
+#ifdef ZENITH_SWITCHER
+        if (_profile != last_profile) {
+            last_profile = _profile;
+            multicore_lockout_start_blocking();
+            cb_zenith_switch_input(_profile);
+            multicore_lockout_end_blocking();
+        }
+#endif
 
         stick_task(atomic_load(&_timestamp), &_analog_data,
                    &_analog_data_processed);

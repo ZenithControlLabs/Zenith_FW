@@ -21,13 +21,13 @@ void apply_btn_remap(btn_remap_profile_t *remap_profile, btn_data_t *in,
 }
 
 void btn_remap_task(btn_data_t *in, btn_data_t *out) {
-    switch (_settings.comms_mode) {
+    switch (_settings[_profile].comms_mode) {
     case COMMS_MODE_N64: {
-        apply_btn_remap(&_settings.btn_remap_profile_n64, in, out);
+        apply_btn_remap(&_settings[_profile].btn_remap_profile_n64, in, out);
         break;
     }
     case COMMS_MODE_GAMECUBE: {
-        apply_btn_remap(&_settings.btn_remap_profile_gamecube, in, out);
+        apply_btn_remap(&_settings[_profile].btn_remap_profile_gamecube, in, out);
         break;
     }
     }

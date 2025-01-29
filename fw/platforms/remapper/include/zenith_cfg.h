@@ -17,4 +17,16 @@
             0xFF, 0xFF, 0xFF, 0xFF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0               \
     }
 
+// Uncomment to build the firmware for the switcher.
+// #define ZENITH_SWITCHER
+
+// GPIO pin to read the switch value from
+#define SWITCH_PIN 10
+
+// GPIO pin for the first controller
+#define JOYBUS_CTLR0 2
+
+// GPIO pin for the second controller
+#define JOYBUS_CTLR1 3
+
 #endif // ZENITH_CFG_H
