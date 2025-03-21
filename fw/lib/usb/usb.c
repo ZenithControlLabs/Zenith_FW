@@ -25,12 +25,12 @@ int hid_report(btn_data_t *buttons, analog_data_t *analog,
 #ifdef HW_PHOBRI_V1_1_DATACOLLECT
     return tud_hid_report(0x4, &dc, sizeof(dc));
 #else 
-    hid_gamepad_report_ext_t report = {.x = (int8_t)(analog->ax1 * 128.0),
-                                       .y = (int8_t)(analog->ax2 * -128.0),
-                                       .z = (int8_t)(analog->ax3 * 128.0),
-                                       .rx = (int8_t)(analog->ax4 * 128.0),
-                                       .ry = (int8_t)(analog->ax5 * 128.0),
-                                       .rz = (int8_t)(analog->ax6 * 128.0),
+    hid_gamepad_report_ext_t report = {.x = (int8_t)(analog->ax1 * 127.0),
+                                       .y = (int8_t)(analog->ax2 * -127.0),
+                                       .z = (int8_t)(analog->ax3 * 127.0),
+                                       .rx = (int8_t)(analog->ax4 * 127.0),
+                                       .ry = (int8_t)(analog->ax5 * 127.0),
+                                       .rz = (int8_t)(analog->ax6 * 127.0),
                                        .hat = GAMEPAD_HAT_CENTERED,
                                        .buttons = buttons->r,
                                        .ax1_raw = analog_raw->ax1,

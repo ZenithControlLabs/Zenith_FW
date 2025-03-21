@@ -4,7 +4,7 @@
 #include "zenith/input/stick.h"
 
 static const double linearize_reference[] = {
-    -100 / 128.0, -75 / 128.0, 0 / 128.0, 75 / 128.0, 100 / 128.0};
+    -100 / 127.0, -75 / 127.0, 0 / 127.0, 75 / 127.0, 100 / 127.0};
 
 ax_t linearize(const ax_t point, const float coefficients[]);
 

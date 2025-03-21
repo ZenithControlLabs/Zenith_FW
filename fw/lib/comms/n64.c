@@ -136,8 +136,8 @@ void n64_comms_task(uint32_t timestamp, btn_data_t *buttons,
     _out_buffer.button_r = buttons->s.b9;
     _out_buffer.button_z = buttons->s.b10;
 
-    _out_buffer.stick_x = (int8_t)(analog->ax1 * 128.0);
-    _out_buffer.stick_y = (int8_t)(analog->ax2 * 128.0);
+    _out_buffer.stick_x = (int8_t)(analog->ax1 * 127.0);
+    _out_buffer.stick_y = (int8_t)(analog->ax2 * 127.0);
 
     _out_buffer.dpad_down = buttons->s.b11;
     _out_buffer.dpad_left = buttons->s.b12;

@@ -144,10 +144,10 @@ void gamecube_comms_task(uint32_t timestamp, btn_data_t *buttons,
         _out_buffer.button_r = buttons->s.b7;
         _out_buffer.button_z = buttons->s.b8;
 
-        _out_buffer.stick_left_x = (int8_t)(analog->ax1 * 128.0) + 128.0;
-        _out_buffer.stick_left_y = (int8_t)(analog->ax2 * 128.0) + 128.0;
-        _out_buffer.stick_right_x = (int8_t)(analog->ax3 * 128.0) + 128.0;
-        _out_buffer.stick_right_y = (int8_t)(analog->ax4 * 128.0) + 128.0;
+        _out_buffer.stick_left_x = (int8_t)(analog->ax1 * 127.0) + 127.0;
+        _out_buffer.stick_left_y = (int8_t)(analog->ax2 * 127.0) + 127.0;
+        _out_buffer.stick_right_x = (int8_t)(analog->ax3 * 127.0) + 127.0;
+        _out_buffer.stick_right_y = (int8_t)(analog->ax4 * 127.0) + 127.0;
 
         _out_buffer.dpad_down = buttons->s.b9;
         _out_buffer.dpad_left = buttons->s.b10;
