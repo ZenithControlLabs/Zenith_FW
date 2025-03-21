@@ -63,6 +63,6 @@ void stick_task(uint32_t timestamp, analog_data_t *in, analog_data_t *out) {
         return;
 
     cb_zenith_read_analog(in);
-    process_stick(in, out, _settings.gate_limiter_enable, &(_settings.calib_results),
-                  &(_settings.stick_config));
+    process_stick(in, out, _settings[_profile].gate_limiter_enable, &(_settings[_profile].calib_results),
+                  &(_settings[_profile].stick_config));
 }

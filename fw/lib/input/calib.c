@@ -123,13 +123,13 @@ void calibration_finish(void) {
     ax_t linearized_points_y[NUM_NOTCHES];
 
     linearize_cal(cleaned_points_x, cleaned_points_y, linearized_points_x,
-                  linearized_points_y, &(_settings.calib_results));
+                  linearized_points_y, &(_settings[_profile].calib_results));
 
     // Copy the linearized points we have just found to phobri's internal data
     // sturcture.
     for (int i = 0; i < NUM_NOTCHES; i++) {
-        _settings.calib_results.notch_points_x_in[i] = linearized_points_x[i];
-        _settings.calib_results.notch_points_y_in[i] = linearized_points_y[i];
+        _settings[_profile].calib_results.notch_points_x_in[i] = linearized_points_x[i];
+        _settings[_profile].calib_results.notch_points_y_in[i] = linearized_points_y[i];
         debug_print("Linearized point:  %d; (x,y) = (%f, %f)\n", i,
                     linearized_points_x[i], linearized_points_y[i]);
     }
@@ -141,21 +141,21 @@ void calibration_finish(void) {
         // angle; doing this will mess it up if the sensor is negative to go up
         // in Y; need to figure out the appropriate place in the code to
         // compensate for this
-        _settings.calib_results.notch_points_x_in[i] =
+        _settings[_profile].calib_results.notch_points_x_in[i] =
             (cleaned_points_x[i + 1] - cleaned_points_x[0]);
-        _settings.calib_results.notch_points_y_in[i] =
+        _settings[_profile].calib_results.notch_points_y_in[i] =
             (cleaned_points_y[i + 1] - cleaned_points_y[0]);
         debug_print("Notch Point in point:  %d; (x,y) = (%f, %f)\n", i,
-                    _settings.calib_results.notch_points_x_in[i],
-                    _settings.calib_results.notch_points_y_in[i]);
+                    _settings[_profile].calib_results.notch_points_x_in[i],
+                    _settings[_profile].calib_results.notch_points_y_in[i]);
     }
 #endif // ZTH_LINEARIZATON_EN
 
-    notch_calibrate(_settings.calib_results.notch_points_x_in,
-                    _settings.calib_results.notch_points_y_in,
-                    _settings.stick_config.notch_points_x,
-                    _settings.stick_config.notch_points_y,
-                    &(_settings.calib_results));
+    notch_calibrate(_settings[_profile].calib_results.notch_points_x_in,
+                    _settings[_profile].calib_results.notch_points_y_in,
+                    _settings[_profile].stick_config.notch_points_x,
+                    _settings[_profile].stick_config.notch_points_y,
+                    &(_settings[_profile].calib_results));
     debug_print("Calibrated!\n");
     /*debug_print("X coeffs: %f %f %f %f, Y coeffs: %f %f %f %f\n",
            _settings.calib_results.fit_coeffs_x[0],

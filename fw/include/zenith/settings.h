@@ -5,6 +5,9 @@
 #include "zenith/input/btn_remap.h"
 #include "zenith/input/stick.h"
 
+// Number of settings profiles
+#define PROFILE_COUNT 2
+
 // 512k from start of flash
 #define FLASH_OFFSET (512 * 1024)
 
@@ -33,7 +36,8 @@ typedef struct {
 
 typedef enum { SETTINGS_NONE, SETTINGS_COMMIT, SETTINGS_RESET } settings_cmd_t;
 
-extern zenith_settings_t _settings;
+extern zenith_settings_t _settings[PROFILE_COUNT];
+extern _Atomic volatile int _profile;
 extern _Atomic volatile settings_cmd_t _settings_cmd;
 
 void settings_core1_handle_commit();
