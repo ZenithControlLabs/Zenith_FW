@@ -27,7 +27,7 @@ jobs:
         apt update
         apt install -y git
         
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       name: Clone Phobri repo
       with:
         submodules: true
@@ -61,7 +61,7 @@ jobs:
       run: cmake --build build
 
     - name: Upload v1_0 UF2
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: v1_0_uf2
         path: build/Phobri64.uf2
@@ -77,7 +77,7 @@ jobs:
         apt update
         apt install -y git
         
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       name: Clone Phobri repo
       with:
         submodules: true
@@ -111,7 +111,7 @@ jobs:
       run: cmake --build build
 
     - name: Upload v1_1_analog UF2
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: v1_1_analog_uf2
         path: build/Phobri64.uf2
@@ -127,7 +127,7 @@ jobs:
         apt update
         apt install -y git
         
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       name: Clone Phobri repo
       with:
         submodules: true
@@ -161,7 +161,7 @@ jobs:
       run: cmake --build build
 
     - name: Upload remapper UF2
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: remapper_uf2
         path: build/N64_Remapper.uf2
@@ -180,10 +180,10 @@ jobs:
 
     if: startsWith(github.ref, 'refs/tags/')
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         name: Clone Phobri repo
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         name: Download UF2s
 
       - name: Move around files
