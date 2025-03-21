@@ -5,6 +5,7 @@
 
 #include "zenith/comms/n64.h"
 #include "zenith/utilities/running_avg.h"
+#include "zenith/includes.h"
 
 void setup_gpio_input(uint8_t gpio) {
     gpio_init(gpio);
@@ -23,6 +24,18 @@ void cb_zenith_init_hardware(void) {
         setup_gpio_input(i);
     }
     init_joybus();
+}
+
+void cb_zenith_switch_controller_input(int index) {
+    change_joybus_index(index);
+}
+
+int cb_zenith_read_controller_switch() {
+    return gpio_get(SWITCH_PIN) ? 1 : 0;
+}
+
+void cb_zenith_switch_input(int index) {
+    change_joybus_index(index);
 }
 
 void cb_zenith_read_buttons(btn_data_t *buttons) {

@@ -105,30 +105,30 @@ void webusb_command_processor(uint8_t *data) {
             debug_print("Notch out of range?\n");
             break;
         }
-        _settings.stick_config.notch_points_x[notch] =
+        _settings[_profile].stick_config.notch_points_x[notch] =
             INT_N_TO_AX((int8_t)data[2], 8);
-        _settings.stick_config.notch_points_y[notch] =
+        _settings[_profile].stick_config.notch_points_y[notch] =
             INT_N_TO_AX((int8_t)data[3], 8);
-        memcpy(_settings.stick_config.angle_deadzones + notch, data + 4,
+        memcpy(_settings[_profile].stick_config.angle_deadzones + notch, data + 4,
                sizeof(float));
         // recompute notch calibration
-        notch_calibrate(_settings.calib_results.notch_points_x_in,
-                        _settings.calib_results.notch_points_y_in,
-                        _settings.stick_config.notch_points_x,
-                        _settings.stick_config.notch_points_y,
-                        &(_settings.calib_results));
+        notch_calibrate(_settings[_profile].calib_results.notch_points_x_in,
+                        _settings[_profile].calib_results.notch_points_y_in,
+                        _settings[_profile].stick_config.notch_points_x,
+                        _settings[_profile].stick_config.notch_points_y,
+                        &(_settings[_profile].calib_results));
     } break;
     case WEBUSB_CMD_NOTCHES_GET: {
         debug_print("WebUSB: Got notch points GET command.\n");
         _webusb_out_buffer[0] = WEBUSB_CMD_NOTCHES_GET;
         for (int i = 0; i < NUM_NOTCHES; i++) {
             _webusb_out_buffer[i * 6 + 1] =
-                AX_TO_INT8(_settings.stick_config.notch_points_x[i]);
+                AX_TO_INT8(_settings[_profile].stick_config.notch_points_x[i]);
             _webusb_out_buffer[i * 6 + 2] =
-                AX_TO_INT8(_settings.stick_config.notch_points_y[i]);
+                AX_TO_INT8(_settings[_profile].stick_config.notch_points_y[i]);
 
             memcpy(_webusb_out_buffer + (i * 6 + 3),
-                   _settings.stick_config.angle_deadzones + i, sizeof(float));
+                   _settings[_profile].stick_config.angle_deadzones + i, sizeof(float));
         }
         if (webusb_ready_blocking(5000)) {
             tud_vendor_n_write(0, _webusb_out_buffer, 64);
@@ -143,10 +143,10 @@ void webusb_command_processor(uint8_t *data) {
         uint8_t bind = data[3];
         switch (c) {
         case COMMS_MODE_N64: {
-            _settings.btn_remap_profile_n64.p[btn] = bind;
+            _settings[_profile].btn_remap_profile_n64.p[btn] = bind;
         }
         case COMMS_MODE_GAMECUBE: {
-            _settings.btn_remap_profile_gamecube.p[btn] = bind;
+            _settings[_profile].btn_remap_profile_gamecube.p[btn] = bind;
             break;
         }
         }
@@ -160,13 +160,13 @@ void webusb_command_processor(uint8_t *data) {
         comms_mode_t c = (comms_mode_t)data[1];
         switch (c) {
         case COMMS_MODE_N64: {
-            memcpy(_webusb_out_buffer + 2, _settings.btn_remap_profile_n64.p,
+            memcpy(_webusb_out_buffer + 2, _settings[_profile].btn_remap_profile_n64.p,
                    32);
             break;
         }
         case COMMS_MODE_GAMECUBE: {
             memcpy(_webusb_out_buffer + 2,
-                   _settings.btn_remap_profile_gamecube.p, 32);
+                   _settings[_profile].btn_remap_profile_gamecube.p, 32);
             break;
         }
         }
@@ -178,13 +178,13 @@ void webusb_command_processor(uint8_t *data) {
 
     case WEBUSB_CMD_MAG_THRESH_SET: {
         debug_print("WebUSB: Got Magnitude Threshold SET command.\n");
-        memcpy(&_settings.stick_config.mag_threshold, data + 4, sizeof(float));
+        memcpy(&_settings[_profile].stick_config.mag_threshold, data + 4, sizeof(float));
     } break;
 
     case WEBUSB_CMD_MAG_THRESH_GET: {
         debug_print("WebUSB: Got Magnitude Threshold GET command.\n");
         _webusb_out_buffer[0] = WEBUSB_CMD_MAG_THRESH_GET;
-        memcpy(_webusb_out_buffer + 4, &_settings.stick_config.mag_threshold,
+        memcpy(_webusb_out_buffer + 4, &_settings[_profile].stick_config.mag_threshold,
                sizeof(float));
 
         if (webusb_ready_blocking(5000)) {
@@ -195,13 +195,13 @@ void webusb_command_processor(uint8_t *data) {
 
     case WEBUSB_CMD_GATE_LIMITER_SET: {
         debug_print("WebUSB: Got Gate Limiter SET command.\n");
-        memcpy(&_settings.gate_limiter_enable, data + 1, sizeof(bool));
+        memcpy(&_settings[_profile].gate_limiter_enable, data + 1, sizeof(bool));
     } break;
 
     case WEBUSB_CMD_GATE_LIMITER_GET: {
         debug_print("WebUSB: Got Gate Limiter GET command.\n");
         _webusb_out_buffer[0] = WEBUSB_CMD_GATE_LIMITER_GET;
-        memcpy(_webusb_out_buffer + 1, &_settings.gate_limiter_enable,
+        memcpy(_webusb_out_buffer + 1, &_settings[_profile].gate_limiter_enable,
                sizeof(bool));
 
         if (webusb_ready_blocking(5000)) {

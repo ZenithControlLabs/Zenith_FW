@@ -9,6 +9,8 @@ Public-facing API for Zenith.
 
 // hardware callbacks
 void cb_zenith_init_hardware(void);
+int cb_zenith_read_controller_switch(void);
+void cb_zenith_switch_input(int index);
 void cb_zenith_read_buttons(btn_data_t *buttons);
 void cb_zenith_read_analog(analog_data_t *analog_data);
 // if ZTH_SEPARATE_CAL_READ, calibration will use this instead to read analog
