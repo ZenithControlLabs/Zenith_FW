@@ -66,6 +66,18 @@ void webusb_command_processor(uint8_t *data) {
         _webusb_output_enabled = true;
     } break;
 
+    case WEBUSB_CMD_CALIBRATION_STATUS_GET: {
+        debug_print("WebUSB: Got calibration STATUS GET command.\n");
+        _webusb_out_buffer[0] = WEBUSB_CMD_CALIBRATION_STATUS_GET;
+        _webusb_out_buffer[1] = _settings[_profile].calib_results.calibrated;
+        _webusb_out_buffer[2] = _cal_step;
+        if (webusb_ready_blocking(5000)) {
+            tud_vendor_n_write(0, _webusb_out_buffer, 64);
+            tud_vendor_n_flush(0);
+        }
+        _webusb_output_enabled = true;
+    } break;
+
     case WEBUSB_CMD_CALIBRATION_START: {
         debug_print("WebUSB: Got calibration START command.\n");
         if (_cal_step < 1) {

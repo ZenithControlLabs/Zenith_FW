@@ -21,7 +21,9 @@
         <div>
           <canvas id="controller-display" width="250" height="250"></canvas></br>
           <input type="checkbox" id="debug-reporting-checked" onClick="window._fns.updateDbgReporting()" checked> Debug Reporting</input></br>
-          <span id="dbg-text"></span>
+          <span id="dbg-text"></span></br></br>
+          <span id="version-text"></span></br>
+          <button type="button" onClick="window._fns.updateFw()">enter firmware update mode</button></br>
         </div>
         
         <div>
@@ -31,9 +33,10 @@
               Y: <span id="y-val"></span></br>
               <button type="button" onClick="window._fns.startCalib()">start calibration</button> 
               <button type="button" onClick="window._fns.saveSettings()">save settings</button></br>
-              <button type="button" onClick="window._fns.resetSettings()">reset settings</button></br>
+              <button type="button" onClick="window._fns.resetSettings()">reset settings</button>
               </br>
               <span id="save-indicator-span" class="save-blinker">You have unsaved changes!</span>
+              <span id="calib-indicator-span" class="save-blinker">Controller is uncalibrated!</span>
             </div>
 
             <div class="cal-or-std-div">
@@ -97,7 +100,7 @@
                     ANGLE DEADZONE: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-7-deadzone"></input> 
                     </div>
                   </div>
-                  Magnitude Threshold (%): <input type="text" class="notch-input" onchange="window._fns.updateMagThresh(this)" id="mag-thresh"></input> 
+                  Magnitude Threshold (%): <input type="text" class="notch-input" onchange="window._fns.updateMagThresh(this)" id="mag-thresh"></input> </br>
                   Enable X-axis Gate Limiter: <input type="checkbox" onchange="window._fns.updateGateLimiter(this)" id="gate-limiter-enable"></input> 
                 </div>
                 <div class="tab-pane fade" id="btnremap" role="tabpanel" aria-labelledby="btnremap-tab">

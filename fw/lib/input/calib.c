@@ -157,6 +157,7 @@ void calibration_finish(void) {
                     _settings[_profile].stick_config.notch_points_y,
                     &(_settings[_profile].calib_results));
     debug_print("Calibrated!\n");
+    _settings[_profile].calib_results.calibrated = true;
     /*debug_print("X coeffs: %f %f %f %f, Y coeffs: %f %f %f %f\n",
            _settings.calib_results.fit_coeffs_x[0],
            _settings.calib_results.fit_coeffs_x[1],

@@ -62,7 +62,7 @@ export function setAy(ay) {
 }
 
 export async function updateDbgReporting() {
-    dbgSpan.style.display = dbgCheckbox.checked ? "block" : "none";
+    dbgSpan.style.visibility = dbgCheckbox.checked ? "visible" : "hidden";
 }
 
 export function updateInputDisplay(data) {

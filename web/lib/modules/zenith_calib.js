@@ -7,6 +7,7 @@ import { setAx, setAy, stickCard, stickDiag, updateCanvas } from "./zenith_input
 let standardDiv = /** @type {HTMLDivElement} */ (document.getElementById("standard-div"));
 let calDiv = /** @type {HTMLDivElement} */ (document.getElementById("cal-div"));
 let calStepSpan = /** @type {HTMLSpanElement} */ (document.getElementById("cal-step"));
+let calIndicatorSpan = /** @type {HTMLSpanElement} */ (document.getElementById("calib-indicator-span"));
 
 const calPoints = [[stickCard,0],
                    [stickDiag,stickDiag],
@@ -19,6 +20,22 @@ const calPoints = [[stickCard,0],
 const numCalSteps = 16;
 
 export let calStep = -1;
+
+function setCalibIndicator(enable) {
+    calIndicatorSpan.style.display = enable ? "block" : "none";
+}
+
+export function placeCalibStatus(data) {
+    let status = data.getUint8(1);
+    let step = data.getUint8(2);
+    if (step != 0) {
+        setCalStep(step);
+        calDiv.style.display = "block";
+        standardDiv.style.display = "none";
+    } else if (!status) {
+        setCalibIndicator(true);
+    }
+}
 
 
 function setCalStep(calStep_in) {
@@ -51,9 +68,10 @@ export async function startCalib() {
 export async function nextStep() {
     if ((calStep+1) > numCalSteps) {
         setCalStep(-1);
+        setCalibIndicator(false);
+        setSaveIndicator();
         calDiv.style.display = "none";
         standardDiv.style.display = "flex";
-        setSaveIndicator();
     } else {
         setCalStep(calStep+1);
     }

@@ -2,7 +2,7 @@
 // @ts-check
 
 import { sleep_ms } from "./utils.js";
-import { calStep } from "./zenith_calib.js";
+import { placeCalibStatus } from "./zenith_calib.js";
 import { updateInputDisplay } from "./zenith_input.js";
 import { placeGateLimiter, placeMagThresh, placeNotches } from "./zenith_notch.js";
 import { CommsMode, _commsMode, placeRemapping, setCommsMode } from "./zenith_remap.js";
@@ -18,7 +18,7 @@ export const WebUSBCmdMap = {
     CALIBRATION_START: 0x01,
     CALIBRATION_ADVANCE: 0x02,
     CALIBRATION_UNDO: 0x03,
-    CALIBRATION_STEP_GET: 0xA2,
+    CALIBRATION_STATUS_GET: 0xA2,
     NOTCH_SET: 0x04,
     NOTCHES_GET: 0xA4,
     REMAP_SET: 0x05,
@@ -159,6 +159,10 @@ const listen = async () => {
         const result = await usbDevice.transferIn(2, 64);
 
         switch (result.data.getUint8(0)) {
+            case WebUSBCmdMap.CALIBRATION_STATUS_GET: {
+                placeCalibStatus(result.data);
+                break;
+            }
             case WebUSBCmdMap.NOTCHES_GET: {
                 placeNotches(result.data);
                 break;
@@ -196,6 +200,10 @@ export async function saveSettings() {
     clearSaveIndicator();
 }
 
+export async function updateFw() {
+    await writeUSBCmd(WebUSBCmdMap.UPDATE_FW);
+}
+
 export async function resetSettings() {
     await writeUSBCmd(WebUSBCmdMap.RESET_SETTINGS);
     await sleep_ms(100);
@@ -204,6 +212,8 @@ export async function resetSettings() {
 }
 
 async function loadAllSettings() {
+    await writeUSBCmd(WebUSBCmdMap.CALIBRATION_STATUS_GET);
+    await sleep_ms(100);
     await writeUSBCmd(WebUSBCmdMap.NOTCHES_GET);
     await sleep_ms(50);
     await writeUSBCmd(WebUSBCmdMap.MAG_THRESH_GET);
