@@ -16,7 +16,7 @@
 static const uint32_t SETTINGS_VER = 0x5002;
 
 #define ZTH_FW_MAJOR 1
-#define ZTH_FW_MINOR 1
+#define ZTH_FW_MINOR 2
 #define ZTH_FW_PATCH 0
 
 // A buffer for settings usable by any userland app using this library.
