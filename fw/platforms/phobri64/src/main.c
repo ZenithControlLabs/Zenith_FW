@@ -1,6 +1,4 @@
 #include "main.h"
-#include <hardware/adc.h>
-#include <stdio.h>
 
 void setup_gpio_button(uint8_t gpio) {
     gpio_init(gpio);

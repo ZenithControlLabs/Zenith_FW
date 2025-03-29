@@ -4,8 +4,20 @@ cmake_minimum_required(VERSION 3.13)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 
+# check pre-requisites
+if(NOT DEFINED ENV{PCB})
+	error("PCB variable is not defined, cannot continue")
+else()
+	message("PCB=$ENV{PCB}")
+endif()
+
+if(NOT DEFINED ENV{PICO_SDK_PATH})
+	error("PICO_SDK_PATH variable is not defined, cannot continue")
+endif()
+
 include($ENV{PICO_SDK_PATH}/pico_sdk_init.cmake)
 
+# configure project
 project(Phobri64 C CXX ASM)
 
 pico_sdk_init()
@@ -32,6 +44,7 @@ target_compile_definitions(${PROJECT_NAME}
 	PICO_XOSC_STARTUP_DELAY_MULTIPLIER=64
 	#PICO_DEFAULT_BOOT_STAGE2=boot2_generic_03h
 	#PICO_FLASH_SPI_CLKDIV=8
+	$ENV{PCB}
 )
 
 # Enable debugging features when running debug builds

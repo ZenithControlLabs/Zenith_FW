@@ -59,7 +59,7 @@ extern analog_data_t _analog_data_processed;
 #define WEBUSB_OE_CONFIRM_THRESHOLD 1
 
 void webusb_save_confirm();
-void webusb_command_processor(uint8_t *data);
+void webusb_command_processor(uint8_t *data, const uint32_t data_size);
 // It's called input report, but this is from the perspective of the USB host.
 // This is an output of the controller.
 void webusb_input_report();

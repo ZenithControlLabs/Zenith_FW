@@ -138,12 +138,17 @@ uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
 }
 
 // Vendor Device Class CB for receiving data
-void tud_vendor_rx_cb(uint8_t itf) {
+void tud_vendor_rx_cb(uint8_t itf, uint8_t const* buffer, uint16_t bufsize) {
+    (void) buffer;
+    (void) bufsize;
+#define BUFFER_SIZE 64
+
     debug_print("WebUSB Data Received.\n");
-    uint8_t buffer[64] = {0};
-    uint32_t size = 0;
-    tud_vendor_n_read(itf, buffer, 64);
-    webusb_command_processor(buffer);
+    uint8_t local_buffer[BUFFER_SIZE] = {0};
+    tud_vendor_n_read(itf, local_buffer, BUFFER_SIZE);
+    webusb_command_processor(local_buffer, BUFFER_SIZE);
+    
+#undef BUFFER_SIZE
 }
 
 // Invoked when a control transfer occurred on an interface of this class

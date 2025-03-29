@@ -37,7 +37,8 @@ bool webusb_ready_blocking(int timeout) {
     return true;
 }
 
-void webusb_command_processor(uint8_t *data) {
+void webusb_command_processor(uint8_t *data, const uint32_t data_size) {
+    (void) data_size;
     _webusb_output_enabled = true;
 
     if ((data[0] & WEBUSB_CMD_USER_MASK) == WEBUSB_CMD_USER_VAL) {
