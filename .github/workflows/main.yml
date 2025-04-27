@@ -36,20 +36,20 @@ jobs:
       uses: suisei-cn/actions-download-file@v1
       id: pico-sdk
       with:
-        url: https://codeload.github.com/raspberrypi/pico-sdk/tar.gz/refs/tags/1.5.1
+        url: https://codeload.github.com/raspberrypi/pico-sdk/tar.gz/refs/tags/2.1.1
         target: assets
 
     - name: Clone TinyUSB 
       uses: suisei-cn/actions-download-file@v1
       id: tinyusb
       with:
-        url: https://codeload.github.com/hathach/tinyusb/tar.gz/refs/tags/0.15.0
+        url: https://codeload.github.com/hathach/tinyusb/tar.gz/refs/tags/0.18.0
         target: assets
 
     - name: Untar Pico SDK
       run: |
-        tar xvf assets/${{ steps.pico-sdk.outputs.filename }} --transform 's/pico-sdk-1.5.1//' -C $PICO_SDK_PATH
-        tar xvf assets/${{ steps.tinyusb.outputs.filename }} --transform 's/tinyusb-0.15.0//' -C $PICO_SDK_PATH/lib/tinyusb
+        tar xvf assets/${{ steps.pico-sdk.outputs.filename }} --transform 's/pico-sdk-2.1.1//' -C $PICO_SDK_PATH
+        tar xvf assets/${{ steps.tinyusb.outputs.filename }} --transform 's/tinyusb-0.18.0//' -C $PICO_SDK_PATH/lib/tinyusb
 
     - name: Configure CMake
       run: |
@@ -86,20 +86,20 @@ jobs:
       uses: suisei-cn/actions-download-file@v1
       id: pico-sdk
       with:
-        url: https://codeload.github.com/raspberrypi/pico-sdk/tar.gz/refs/tags/1.5.1
+        url: https://codeload.github.com/raspberrypi/pico-sdk/tar.gz/refs/tags/2.1.1
         target: assets
 
     - name: Clone TinyUSB 
       uses: suisei-cn/actions-download-file@v1
       id: tinyusb
       with:
-        url: https://codeload.github.com/hathach/tinyusb/tar.gz/refs/tags/0.15.0
+        url: https://codeload.github.com/hathach/tinyusb/tar.gz/refs/tags/0.18.0
         target: assets
 
     - name: Untar Pico SDK
       run: |
-        tar xvf assets/${{ steps.pico-sdk.outputs.filename }} --transform 's/pico-sdk-1.5.1//' -C $PICO_SDK_PATH
-        tar xvf assets/${{ steps.tinyusb.outputs.filename }} --transform 's/tinyusb-0.15.0//' -C $PICO_SDK_PATH/lib/tinyusb
+        tar xvf assets/${{ steps.pico-sdk.outputs.filename }} --transform 's/pico-sdk-2.1.1//' -C $PICO_SDK_PATH
+        tar xvf assets/${{ steps.tinyusb.outputs.filename }} --transform 's/tinyusb-0.18.0//' -C $PICO_SDK_PATH/lib/tinyusb
 
     - name: Configure CMake
       run: |
@@ -136,20 +136,20 @@ jobs:
       uses: suisei-cn/actions-download-file@v1
       id: pico-sdk
       with:
-        url: https://codeload.github.com/raspberrypi/pico-sdk/tar.gz/refs/tags/1.5.1
+        url: https://codeload.github.com/raspberrypi/pico-sdk/tar.gz/refs/tags/2.1.1
         target: assets
 
     - name: Clone TinyUSB 
       uses: suisei-cn/actions-download-file@v1
       id: tinyusb
       with:
-        url: https://codeload.github.com/hathach/tinyusb/tar.gz/refs/tags/0.15.0
+        url: https://codeload.github.com/hathach/tinyusb/tar.gz/refs/tags/0.18.0
         target: assets
 
     - name: Untar Pico SDK
       run: |
-        tar xvf assets/${{ steps.pico-sdk.outputs.filename }} --transform 's/pico-sdk-1.5.1//' -C $PICO_SDK_PATH
-        tar xvf assets/${{ steps.tinyusb.outputs.filename }} --transform 's/tinyusb-0.15.0//' -C $PICO_SDK_PATH/lib/tinyusb
+        tar xvf assets/${{ steps.pico-sdk.outputs.filename }} --transform 's/pico-sdk-2.1.1//' -C $PICO_SDK_PATH
+        tar xvf assets/${{ steps.tinyusb.outputs.filename }} --transform 's/tinyusb-0.18.0//' -C $PICO_SDK_PATH/lib/tinyusb
 
     - name: Configure CMake
       run: |
