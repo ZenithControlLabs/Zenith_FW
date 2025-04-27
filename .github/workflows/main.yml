@@ -25,8 +25,8 @@ jobs:
     steps:
     - name: Install dependencies
       run: |
-        apt update
-        apt install -y git build-essential python3 cmake gcc-arm-none-eabi libnewlib-arm-none-eabi
+        sudo apt-get update
+        sudo apt-get install -y git build-essential python3 cmake gcc-arm-none-eabi libnewlib-arm-none-eabi
         
     - uses: actions/checkout@v4
       name: Clone Phobri repo
@@ -76,8 +76,8 @@ jobs:
     steps:
     - name: Install dependencies
       run: |
-        apt update
-        apt install -y git build-essential python3 cmake gcc-arm-none-eabi libnewlib-arm-none-eabi
+        sudo apt-get update
+        sudo apt-get install -y git build-essential python3 cmake gcc-arm-none-eabi libnewlib-arm-none-eabi
         
     - uses: actions/checkout@v4
       name: Clone Phobri repo
@@ -127,8 +127,8 @@ jobs:
     steps:
     - name: Install dependencies
       run: |
-        apt update
-        apt install -y git build-essential python3 cmake gcc-arm-none-eabi libnewlib-arm-none-eabi
+        sudo apt-get update
+        sudo apt-get install -y git build-essential python3 cmake gcc-arm-none-eabi libnewlib-arm-none-eabi
         
     - uses: actions/checkout@v4
       name: Clone Phobri repo
