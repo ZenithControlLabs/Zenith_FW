@@ -7,8 +7,8 @@ with open("workflows/main.yml", mode="w") as f:
     f.write(template.render(
         {
             "buildconfigs": [
-                { "name": "v1_0", "platform": "phobri64", "cmake_opts": "-DCMAKE_C_FLAGS=-DHW_PHOBRI_V1_0"},
-                { "name": "v1_1_analog",  "platform": "phobri64", "cmake_opts": "-DCMAKE_C_FLAGS=-DHW_PHOBRI_V1_1_ANALOG"},
+                { "name": "v1_0", "platform": "phobri64", "cmake_opts": "-DPCB=HW_PHOBRI_V1_0"},
+                { "name": "v1_1_analog",  "platform": "phobri64", "cmake_opts": "-DPCB=HW_PHOBRI_V1_1_ANALOG"},
                 { "name": "remapper",  "platform": "remapper", "cmake_opts": ""},
             ],
             "name2uf2": {

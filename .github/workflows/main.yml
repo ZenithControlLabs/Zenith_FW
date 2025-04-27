@@ -54,7 +54,7 @@ jobs:
     - name: Configure CMake
       run: |
         git config --global --add safe.directory $(pwd)
-        cmake -S fw/platforms/phobri64 -B build -DCMAKE_C_FLAGS=-DHW_PHOBRI_V1_0 -DCMAKE_BUILD_TYPE=Release
+        cmake -S fw/platforms/phobri64 -B build -DPCB=HW_PHOBRI_V1_0 -DCMAKE_BUILD_TYPE=Release
 
     - name: Build
       # Build your program with the given configuration
@@ -104,7 +104,7 @@ jobs:
     - name: Configure CMake
       run: |
         git config --global --add safe.directory $(pwd)
-        cmake -S fw/platforms/phobri64 -B build -DCMAKE_C_FLAGS=-DHW_PHOBRI_V1_1_ANALOG -DCMAKE_BUILD_TYPE=Release
+        cmake -S fw/platforms/phobri64 -B build -DPCB=HW_PHOBRI_V1_1_ANALOG -DCMAKE_BUILD_TYPE=Release
 
     - name: Build
       # Build your program with the given configuration
