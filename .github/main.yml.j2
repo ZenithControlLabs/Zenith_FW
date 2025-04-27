@@ -49,6 +49,7 @@ jobs:
 
     - name: Untar Pico SDK
       run: |
+        mkdir -p $PICO_SDK_PATH
         tar xvf assets/{% raw %}${{ steps.pico-sdk.outputs.filename }}{% endraw %} --transform 's/pico-sdk-2.1.1//' -C $PICO_SDK_PATH
         tar xvf assets/{% raw %}${{ steps.tinyusb.outputs.filename }}{% endraw %} --transform 's/tinyusb-0.18.0//' -C $PICO_SDK_PATH/lib/tinyusb
 
