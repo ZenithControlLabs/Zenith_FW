@@ -9,8 +9,8 @@ void process_stick(analog_data_t *in, analog_data_t *out,
     ax_t notch_remap_in_x = linearize(in->ax1, calib_results->fit_coeffs_x);
     ax_t notch_remap_in_y = linearize(in->ax2, calib_results->fit_coeffs_y);
 #else
-    ax_t notch_remap_in_x = in->ax1;
-    ax_t notch_remap_in_y = in->ax2;
+    ax_t notch_remap_in_x = calib_results->fit_coeffs_x[1] * (in->ax1 - calib_results->fit_coeffs_x[0]);
+    ax_t notch_remap_in_y = calib_results->fit_coeffs_y[1] * (in->ax2 - calib_results->fit_coeffs_y[0]);
 #endif
 
     ax_t remapped_x, remapped_y;

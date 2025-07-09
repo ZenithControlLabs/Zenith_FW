@@ -23,7 +23,7 @@
 #endif
 
 #ifndef ZTH_LINEARIZATION_EN
-#define ZTH_LINEARIZATION_EN 1
+#define ZTH_LINEARIZATION_EN 0
 #endif
 
 // if you want to use a different set of analog data for calibration,

@@ -4,6 +4,7 @@
 #include "main.h"
 
 #if defined(HW_PHOBRI_PROTO)
+#define ZTH_LINEARIZATION_EN 1
 #include "hw/phobri_proto.h"
 #define HW_CORE1_INIT phobri_proto_core1_init
 #define HW_READ_ANALOG phobri_proto_read_analog

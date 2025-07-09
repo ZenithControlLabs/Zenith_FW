@@ -134,6 +134,8 @@ void calibration_finish(void) {
                     linearized_points_x[i], linearized_points_y[i]);
     }
 #else
+    float x_flip = cleaned_points_x[1] > cleaned_points_x[5] ? 1 : -1; 
+    float y_flip = cleaned_points_y[3] > cleaned_points_y[7] ? 1 : -1;
     // Linearization normally moves the center point to an implicit 0,0.
     // To carry forth the assumption for notch calibration, we will do the same.
     for (int i = 0; i < NUM_NOTCHES; i++) {
@@ -142,14 +144,22 @@ void calibration_finish(void) {
         // in Y; need to figure out the appropriate place in the code to
         // compensate for this
         _settings[_profile].calib_results.notch_points_x_in[i] =
-            (cleaned_points_x[i + 1] - cleaned_points_x[0]);
+            (cleaned_points_x[i + 1] - cleaned_points_x[0]) * x_flip;
         _settings[_profile].calib_results.notch_points_y_in[i] =
-            (cleaned_points_y[i + 1] - cleaned_points_y[0]);
+            (cleaned_points_y[i + 1] - cleaned_points_y[0]) * y_flip;
         debug_print("Notch Point in point:  %d; (x,y) = (%f, %f)\n", i,
                     _settings[_profile].calib_results.notch_points_x_in[i],
                     _settings[_profile].calib_results.notch_points_y_in[i]);
     }
+    // copy over center offset
+    _settings[_profile].calib_results.fit_coeffs_x[0] = cleaned_points_x[0];
+    _settings[_profile].calib_results.fit_coeffs_y[0] = cleaned_points_y[0];
+    // set direction for each axis
+    _settings[_profile].calib_results.fit_coeffs_x[1] = x_flip;
+    _settings[_profile].calib_results.fit_coeffs_y[1] = y_flip;
+
 #endif // ZTH_LINEARIZATON_EN
+
 
     notch_calibrate(_settings[_profile].calib_results.notch_points_x_in,
                     _settings[_profile].calib_results.notch_points_y_in,
