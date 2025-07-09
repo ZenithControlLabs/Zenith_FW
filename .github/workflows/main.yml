@@ -17,59 +17,7 @@ permissions:
 jobs:
 
 
-  build-v1_0:  
-    runs-on: ubuntu-latest
-    env:
-      PICO_SDK_PATH: /pico-sdk 
-
-    steps:
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y git build-essential python3 cmake gcc-arm-none-eabi libnewlib-arm-none-eabi
-        
-    - uses: actions/checkout@v4
-      name: Clone Phobri repo
-      with:
-        submodules: true
-
-    - name: Clone Pico SDK
-      uses: suisei-cn/actions-download-file@v1
-      id: pico-sdk
-      with:
-        url: https://codeload.github.com/raspberrypi/pico-sdk/tar.gz/refs/tags/2.1.1
-        target: assets
-
-    - name: Clone TinyUSB 
-      uses: suisei-cn/actions-download-file@v1
-      id: tinyusb
-      with:
-        url: https://codeload.github.com/hathach/tinyusb/tar.gz/refs/tags/0.18.0
-        target: assets
-
-    - name: Untar Pico SDK
-      run: |
-        sudo mkdir -p $PICO_SDK_PATH
-        sudo tar xvf assets/${{ steps.pico-sdk.outputs.filename }} --transform 's/pico-sdk-2.1.1//' -C $PICO_SDK_PATH
-        sudo tar xvf assets/${{ steps.tinyusb.outputs.filename }} --transform 's/tinyusb-0.18.0//' -C $PICO_SDK_PATH/lib/tinyusb
-
-    - name: Configure CMake
-      run: |
-        git config --global --add safe.directory $(pwd)
-        cmake -S fw/platforms/phobri64 -B build -DPCB=HW_PHOBRI_V1_0 -DCMAKE_BUILD_TYPE=Release
-
-    - name: Build
-      # Build your program with the given configuration
-      run: cmake --build build
-
-    - name: Upload v1_0 UF2
-      uses: actions/upload-artifact@v4
-      with:
-        name: v1_0_uf2
-        path: build/Phobri64.uf2
-        if-no-files-found: error
-
-  build-v1_1_analog:  
+  build-v1_X:  
     runs-on: ubuntu-latest
     env:
       PICO_SDK_PATH: /pico-sdk 
@@ -114,10 +62,10 @@ jobs:
       # Build your program with the given configuration
       run: cmake --build build
 
-    - name: Upload v1_1_analog UF2
+    - name: Upload v1_X UF2
       uses: actions/upload-artifact@v4
       with:
-        name: v1_1_analog_uf2
+        name: v1_X_uf2
         path: build/Phobri64.uf2
         if-no-files-found: error
 
@@ -178,9 +126,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
 
-      - build-v1_0
-
-      - build-v1_1_analog
+      - build-v1_X
 
       - build-remapper
 
@@ -195,9 +141,7 @@ jobs:
       - name: Move around files
         run: |
         
-          mv v1_0_uf2/Phobri64.uf2 ./Phobri64_${{ github.ref_name }}_v1_0.uf2
-        
-          mv v1_1_analog_uf2/Phobri64.uf2 ./Phobri64_${{ github.ref_name }}_v1_1_analog.uf2
+          mv v1_X_uf2/Phobri64.uf2 ./Phobri64_${{ github.ref_name }}_v1_X.uf2
         
           mv remapper_uf2/N64_Remapper.uf2 ./N64_Remapper_${{ github.ref_name }}_remapper.uf2
         
@@ -207,7 +151,6 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
             files: |
-              Phobri64_${{ github.ref_name }}_v1_0.uf2
-              Phobri64_${{ github.ref_name }}_v1_1_analog.uf2
+              Phobri64_${{ github.ref_name }}_v1_X.uf2
               N64_Remapper_${{ github.ref_name }}_remapper.uf2
               
