@@ -1,4 +1,4 @@
-#include "zenith/includes.h"
+#include "linearize.h"
 
 ax_t linearize(const ax_t point, const float coefficients[]) {
     return (coefficients[0] * (point * point * point) +

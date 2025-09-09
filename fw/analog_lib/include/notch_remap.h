@@ -1,7 +1,7 @@
 #ifndef ZENITH_NOTCH_REMAP_H
 #define ZENITH_NOTCH_REMAP_H
 
-#include "zenith/input/stick.h"
+#include "stick.h"
 
 void notch_remap(const ax_t x_in, const ax_t y_in, ax_t *x_out, ax_t *y_out,
                  const bool gate_limiter_enable,

@@ -1,25 +1,6 @@
-#include "zenith/includes.h"
+#include "zenith/input/stick_task.h"
 
-void process_stick(analog_data_t *in, analog_data_t *out,
-                   const bool gate_limiter_enable,
-                   const calib_results_t *calib_results,
-                   const stick_config_t *stick_config) {
-
-#if ZTH_LINEARIZATION_EN
-    ax_t notch_remap_in_x = linearize(in->ax1, calib_results->fit_coeffs_x);
-    ax_t notch_remap_in_y = linearize(in->ax2, calib_results->fit_coeffs_y);
-#else
-    ax_t notch_remap_in_x = calib_results->fit_coeffs_x[1] * (in->ax1 - calib_results->fit_coeffs_x[0]);
-    ax_t notch_remap_in_y = calib_results->fit_coeffs_y[1] * (in->ax2 - calib_results->fit_coeffs_y[0]);
-#endif
-
-    ax_t remapped_x, remapped_y;
-    notch_remap(notch_remap_in_x, notch_remap_in_y, &remapped_x, &remapped_y,
-                gate_limiter_enable, calib_results, stick_config);
-
-    out->ax1 = fmin(1.0, fmax(-1.0, remapped_x));
-    out->ax2 = fmin(1.0, fmax(-1.0, remapped_y));
-}
+volatile _Atomic cal_msg_t _cal_msg;
 
 static inline void calib_task(analog_data_t *in, analog_data_t *out) {
     // We will always read the controller. Forget ZTH_STICK_INTERVAL,
@@ -38,12 +19,12 @@ static inline void calib_task(analog_data_t *in, analog_data_t *out) {
 #if ZTH_SEPARATE_CAL_READ
         cb_zenith_read_analog_cal(in);
 #endif
-        calibration_advance(in);
+        analoglib_cal_advance(in);
         break;
     }
     case CALIB_UNDO: {
         atomic_store(&_cal_msg, CALIB_NONE);
-        calibration_undo();
+        analoglib_cal_undo();
         break;
     }
     default:

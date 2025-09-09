@@ -1,7 +1,7 @@
 #ifndef ZENITH_LINEARIZE_H
 #define ZENITH_LINEARIZE_H
 
-#include "zenith/input/stick.h"
+#include "stick.h"
 
 static const double linearize_reference[] = {
     -100 / 127.0, -75 / 127.0, 0 / 127.0, 75 / 127.0, 100 / 127.0};

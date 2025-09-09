@@ -1,7 +1,11 @@
-#include "zenith/includes.h"
+#include "stick.h"
+#include "notch_remap.h"
+#include "linearize.h"
+
+calib_results_t* g_calib_results;
+stick_config_t* g_stick_config;
 
 volatile int _cal_step = 0;
-volatile _Atomic cal_msg_t _cal_msg;
 ax_t raw_cal_points_x[CALIBRATION_NUM_STEPS];
 ax_t raw_cal_points_y[CALIBRATION_NUM_STEPS];
 
@@ -73,35 +77,6 @@ void fold_center_points(const ax_t raw_cal_points_x[],
     cleaned_points_y[0] = cleaned_points_y[0] / ((float)NUM_NOTCHES - 2);
 }
 
-void calibration_advance(analog_data_t *in) {
-    // failsafe - this function should not be called if incrementing the step
-    // would lead to an invalid state
-    if (_cal_step < 1 || _cal_step > CALIBRATION_NUM_STEPS)
-        return;
-
-    raw_cal_points_x[_cal_step - 1] = in->ax1;
-    raw_cal_points_y[_cal_step - 1] = in->ax2;
-    debug_print("Raw X value collected: %f\nRaw Y value collected: %f\n",
-                in->ax1, in->ax2);
-    _cal_step++;
-
-    if (_cal_step > CALIBRATION_NUM_STEPS) {
-        calibration_finish();
-    } else {
-        debug_print("Calibration Step [%d/%d]\n", _cal_step,
-                    CALIBRATION_NUM_STEPS);
-    }
-}
-
-void calibration_undo(void) {
-    // Go back one calibration step, only if we are actually calibrating and
-    // not at the beginning.
-    if (_cal_step > 1) {
-        _cal_step--;
-    }
-    debug_print("Calibration Step [%d/%d]\n", _cal_step, CALIBRATION_NUM_STEPS);
-}
-
 void calibration_finish(void) {
     // We're done calibrating. Do the math to save our calibration parameters
     ax_t cleaned_points_x[NUM_NOTCHES + 1];
@@ -123,13 +98,13 @@ void calibration_finish(void) {
     ax_t linearized_points_y[NUM_NOTCHES];
 
     linearize_cal(cleaned_points_x, cleaned_points_y, linearized_points_x,
-                  linearized_points_y, &(_settings[_profile].calib_results));
+                  linearized_points_y, g_calib_results);
 
     // Copy the linearized points we have just found to phobri's internal data
     // sturcture.
     for (int i = 0; i < NUM_NOTCHES; i++) {
-        _settings[_profile].calib_results.notch_points_x_in[i] = linearized_points_x[i];
-        _settings[_profile].calib_results.notch_points_y_in[i] = linearized_points_y[i];
+        g_calib_results->notch_points_x_in[i] = linearized_points_x[i];
+        g_calib_results->notch_points_y_in[i] = linearized_points_y[i];
         debug_print("Linearized point:  %d; (x,y) = (%f, %f)\n", i,
                     linearized_points_x[i], linearized_points_y[i]);
     }
@@ -143,31 +118,31 @@ void calibration_finish(void) {
         // angle; doing this will mess it up if the sensor is negative to go up
         // in Y; need to figure out the appropriate place in the code to
         // compensate for this
-        _settings[_profile].calib_results.notch_points_x_in[i] =
+        g_calib_results->notch_points_x_in[i] =
             (cleaned_points_x[i + 1] - cleaned_points_x[0]) * x_flip;
-        _settings[_profile].calib_results.notch_points_y_in[i] =
+        g_calib_results->notch_points_y_in[i] =
             (cleaned_points_y[i + 1] - cleaned_points_y[0]) * y_flip;
         debug_print("Notch Point in point:  %d; (x,y) = (%f, %f)\n", i,
-                    _settings[_profile].calib_results.notch_points_x_in[i],
-                    _settings[_profile].calib_results.notch_points_y_in[i]);
+                    g_calib_results->notch_points_x_in[i],
+                    g_calib_results->notch_points_y_in[i]);
     }
     // copy over center offset
-    _settings[_profile].calib_results.fit_coeffs_x[0] = cleaned_points_x[0];
-    _settings[_profile].calib_results.fit_coeffs_y[0] = cleaned_points_y[0];
+    g_calib_results->fit_coeffs_x[0] = cleaned_points_x[0];
+    g_calib_results->fit_coeffs_y[0] = cleaned_points_y[0];
     // set direction for each axis
-    _settings[_profile].calib_results.fit_coeffs_x[1] = x_flip;
-    _settings[_profile].calib_results.fit_coeffs_y[1] = y_flip;
+    g_calib_results->fit_coeffs_x[1] = x_flip;
+    g_calib_results->fit_coeffs_y[1] = y_flip;
 
 #endif // ZTH_LINEARIZATON_EN
 
 
-    notch_calibrate(_settings[_profile].calib_results.notch_points_x_in,
-                    _settings[_profile].calib_results.notch_points_y_in,
-                    _settings[_profile].stick_config.notch_points_x,
-                    _settings[_profile].stick_config.notch_points_y,
-                    &(_settings[_profile].calib_results));
+    notch_calibrate(g_calib_results->notch_points_x_in,
+                    g_calib_results->notch_points_y_in,
+                    g_stick_config->notch_points_x,
+                    g_stick_config->notch_points_y,
+                    g_calib_results);
     debug_print("Calibrated!\n");
-    _settings[_profile].calib_results.calibrated = true;
+    g_calib_results->calibrated = true;
     /*debug_print("X coeffs: %f %f %f %f, Y coeffs: %f %f %f %f\n",
            _settings.calib_results.fit_coeffs_x[0],
            _settings.calib_results.fit_coeffs_x[1],
@@ -179,3 +154,59 @@ void calibration_finish(void) {
            _settings.calib_results.fit_coeffs_y[3]);*/
     _cal_step = 0;
 }
+
+void analoglib_cal_advance(analog_data_t *in) {
+    // failsafe - this function should not be called if incrementing the step
+    // would lead to an invalid state
+    if (_cal_step < 1 || _cal_step > CALIBRATION_NUM_STEPS)
+        return;
+
+    raw_cal_points_x[_cal_step - 1] = in->ax1;
+    raw_cal_points_y[_cal_step - 1] = in->ax2;
+    debug_print("Raw X value collected: %f\nRaw Y value collected: %f\n",
+                in->ax1, in->ax2);
+    _cal_step++;
+
+    if (_cal_step > CALIBRATION_NUM_STEPS) {
+        analoglib_cal_finish();
+    } else {
+        debug_print("Calibration Step [%d/%d]\n", _cal_step,
+                    CALIBRATION_NUM_STEPS);
+    }
+}
+
+void analoglib_cal_undo(void) {
+    // Go back one calibration step, only if we are actually calibrating and
+    // not at the beginning.
+    if (_cal_step > 1) {
+        _cal_step--;
+    }
+    debug_print("Calibration Step [%d/%d]\n", _cal_step, CALIBRATION_NUM_STEPS);
+}
+
+
+void analoglib_init(calib_results_t *settings_calib_results, stick_config_t *settings_stick_config) {
+    g_calib_results = settings_calib_results;
+    g_stick_config = settings_stick_config;
+}
+
+void analoglib_process(analog_data_t *in, analog_data_t *out,
+                   const bool gate_limiter_enable) {
+
+#if ZTH_LINEARIZATION_EN
+    ax_t notch_remap_in_x = linearize(in->ax1, calib_results->fit_coeffs_x);
+    ax_t notch_remap_in_y = linearize(in->ax2, calib_results->fit_coeffs_y);
+#else
+    ax_t notch_remap_in_x = g_calib_results->fit_coeffs_x[1] * (in->ax1 - g_calib_results->fit_coeffs_x[0]);
+    ax_t notch_remap_in_y = g_calib_results->fit_coeffs_y[1] * (in->ax2 - g_calib_results->fit_coeffs_y[0]);
+#endif
+
+    ax_t remapped_x, remapped_y;
+    notch_remap(notch_remap_in_x, notch_remap_in_y, &remapped_x, &remapped_y,
+                gate_limiter_enable, g_calib_results, g_stick_config);
+
+    out->ax1 = fmin(1.0, fmax(-1.0, remapped_x));
+    out->ax2 = fmin(1.0, fmax(-1.0, remapped_y));
+}
+
+
