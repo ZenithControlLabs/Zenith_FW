@@ -22,7 +22,7 @@ target_sources(zenith_lib INTERFACE
   ${CMAKE_CURRENT_LIST_DIR}/comms/n64.c 
 )
 
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../analog_lib/ lib)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../analog_lib/ analog_lib)
 target_include_directories(zenith_lib INTERFACE
   ${CMAKE_CURRENT_LIST_DIR}/../include
   ${CMAKE_CURRENT_LIST_DIR}/../analog_lib/include

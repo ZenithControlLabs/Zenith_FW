@@ -1,5 +1,4 @@
 #include "notch_remap.h"
-#include "math.h"
 
 // Invert a 3x3 matrix
 void inverse(const float in[3][3], float out[3][3]) {

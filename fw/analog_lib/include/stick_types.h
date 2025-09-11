@@ -1,6 +1,8 @@
 #ifndef STICK_TYPES_H
 #define STICK_TYPES_H
 
+#include <math.h>
+
 // Represents the range of an axis from -1.0 to 1.0.
 // This is an arbitrary range, but it's meant to be easiest to
 // convert to different representations used by different devices.

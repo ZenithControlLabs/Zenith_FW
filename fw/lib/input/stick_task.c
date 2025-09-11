@@ -1,4 +1,5 @@
 #include "zenith/input/stick_task.h"
+#include "stick.h"
 
 volatile _Atomic cal_msg_t _cal_msg;
 
@@ -44,6 +45,5 @@ void stick_task(uint32_t timestamp, analog_data_t *in, analog_data_t *out) {
         return;
 
     cb_zenith_read_analog(in);
-    process_stick(in, out, _settings[_profile].gate_limiter_enable, &(_settings[_profile].calib_results),
-                  &(_settings[_profile].stick_config));
+    analoglib_process(in, out, _settings[_profile].gate_limiter_enable);
 }
