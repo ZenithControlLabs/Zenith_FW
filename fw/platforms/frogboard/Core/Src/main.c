@@ -23,7 +23,18 @@
 /* USER CODE BEGIN Includes */
 #include <stdlib.h>
 #include <stdio.h>
+#include "stm32l4xx_hal_adc.h"
+#include "stm32l4xx_hal_conf.h"
+#include "stm32l4xx_hal_dac.h"
+#include "stm32l4xx_hal_gpio.h"
+#include "stm32l4xx_hal_lptim.h"
+
 #include "stick.h"
+#include "stick_types.h"
+
+#include "intf.h"
+#include "settings.h"
+#include "menu.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -37,6 +48,7 @@ typedef struct {
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define TIMER_LEN ((1 << 24) - 1)
+#define POLL_RATE_HZ 2048
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -49,12 +61,56 @@ ADC_HandleTypeDef hadc1;
 
 DAC_HandleTypeDef hdac1;
 
-TIM_HandleTypeDef htim1;
+LPTIM_HandleTypeDef hlptim1;
 
+UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-vec2_t calibration_points_in[] = {
+volatile int g_poll_rdy = 1;
+volatile int g_sleeping = 0;
+/* USER CODE END PV */
+
+/* Private function prototypes -----------------------------------------------*/
+void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+static void MX_ADC1_Init(void);
+static void MX_DAC1_Init(void);
+static void MX_USART2_UART_Init(void);
+static void MX_USART1_UART_Init(void);
+static void MX_LPTIM1_Init(void);
+/* USER CODE BEGIN PFP */
+#define PRINTF2UART2 int __io_putchar(int data)
+/* USER CODE END PFP */
+
+/* Private user code ---------------------------------------------------------*/
+/* USER CODE BEGIN 0 */
+
+// TODO
+static inline uint16_t read_adc_x() {
+  return 0;
+}
+static inline uint16_t read_adc_y() {
+  return 0;
+}
+
+// TODO: make an enum for the steps here
+void factory_init() {
+  int step = 0;
+  while (step < 2) {
+    uint16_t ax_in = read_adc_x();
+    uint16_t ay_in = read_adc_y();
+    if (step == 0) { // Step 0: polairty calibration 
+    } else {
+      // ...
+    }
+    intf_out(0, 0);
+  }
+}
+
+void speed_benchmark() {
+  printf("This is FrogBoard! (speed benchmark)\n\r");
+  vec2_t calibration_points_in[] = {
     { 3, 0 },
     { 96, 0 },
     { 0, 1 },
@@ -72,18 +128,8 @@ vec2_t calibration_points_in[] = {
     { 0, 0 },
     { 80, -80 }
 };
-
-calib_results_t g_calib_results = {
-    .calibrated = false,
-    .affine_coeffs = {0},
-    .boundary_angles = {0},
-    .fit_coeffs_x = {0},
-    .fit_coeffs_y = {0},
-    .notch_points_x_in = {0},
-    .notch_points_y_in = {0}
-};
-
-stick_config_t g_stick_config = {
+  calib_results_t test_calib_results = {0};
+  stick_config_t test_stick_config = {
     .notch_points_x = {
         INT_N_TO_AX(85, 8), INT_N_TO_AX(70, 8), INT_N_TO_AX(0, 8),
         INT_N_TO_AX(-70, 8), INT_N_TO_AX(-85, 8), INT_N_TO_AX(-70, 8),
@@ -97,23 +143,55 @@ stick_config_t g_stick_config = {
     .angle_deadzones = {0},
     .mag_threshold = .8 // 80% into the notch by default
 };
+  analoglib_init(&test_calib_results, &test_stick_config);
+  analog_data_t in;
+  // Skip "start" command
+  _cal_step = 1;
+  for (int i = 0; i < 16; i++) {
+    in.ax1 = INT_N_TO_AX(calibration_points_in[i].x, 8);
+    in.ax2 = INT_N_TO_AX(calibration_points_in[i].y, 8);
+    analoglib_cal_advance(&in);
+  }
+  SysTick->CTRL = 0x07;     // CLKSRC | ENABLE, interrupt enable
+  while (1) {
+    for (volatile int i = 0; i < 1000; i++) {
+      analog_data_t out;
+      in.ax1 = INT_N_TO_AX((rand() & 255 - 128), 8);
+      in.ax2 = INT_N_TO_AX((rand() & 255 - 128), 8);
+      analoglib_process(&in, &out, false);
+    }
+    uint32_t duration = (TIMER_LEN - SysTick->VAL) + (g_timer_wrap * TIMER_LEN);
+    int speed = (int)(24.0e9 /((float)duration));
+    printf("%d\n\r", speed);
+  }
+}
 
-volatile int go = 0;
-/* USER CODE END PV */
+static inline void main_loop_body(bool settings_mode) {
+  analog_data_t in;
+  analog_data_t out;
+    // Read ADC
+    uint16_t ax_in = read_adc_x();
+    uint16_t ay_in = read_adc_y(); 
 
-/* Private function prototypes -----------------------------------------------*/
-void SystemClock_Config(void);
-static void MX_GPIO_Init(void);
-static void MX_ADC1_Init(void);
-static void MX_DAC1_Init(void);
-static void MX_USART2_UART_Init(void);
-static void MX_TIM1_Init(void);
-/* USER CODE BEGIN PFP */
-#define PRINTF2UART2 int __io_putchar(int data)
-/* USER CODE END PFP */
+    // In Phobri stickboard emulation mode? Send out the raw ADC reading
+    if (!intf_is_mode_analog()) {
+      intf_out(ax_in, ay_in);
+      return;
+    }
 
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
+    in.ax1 = INT_N_TO_AX(ax_in, 8);
+    in.ax2 = INT_N_TO_AX(ay_in, 8);
+
+    // Process, either normal or we are in settings menu
+    if (settings_mode) {
+      bool btn_press = HAL_GPIO_ReadPin(STICK_BTN_GPIO_Port, STICK_BTN_Pin);
+      menu_process(&in, &out, btn_press);
+    } else {
+      analoglib_process(&in, &out, false);
+    } 
+
+    intf_out(AX_TO_INT16(out.ax1), AX_TO_INT16(out.ax2));  
+}
 
 /* USER CODE END 0 */
 
@@ -149,37 +227,55 @@ int main(void)
   MX_ADC1_Init();
   MX_DAC1_Init();
   MX_USART2_UART_Init();
-  MX_TIM1_Init();
+  MX_USART1_UART_Init();
+  MX_LPTIM1_Init();
   /* USER CODE BEGIN 2 */
-  printf("This is FrogBoard!\n\r");
-  analoglib_init(&g_calib_results, &g_stick_config);
-  // Skip "start" command
-  _cal_step = 1;
-  analog_data_t in;
-  for (int i = 0; i < 16; i++) {
-    in.ax1 = INT_N_TO_AX(calibration_points_in[i].x, 8);
-    in.ax2 = INT_N_TO_AX(calibration_points_in[i].y, 8);
-    analoglib_cal_advance(&in);
+  // Initialize output interface - do the I2C test to see if we need to be in Phobri mode or not
+  intf_init(&hdac1);
+
+  // First (try to) load settings from flash. Interface will need this for output calibration when running in analog mode.
+  bool needs_factory_init = intf_is_mode_analog() && settings_load();
+
+  // Run any special benchmark modes if specified
+#ifdef BENCHMARK_SPEED
+  speed_benchmark();
+  return 0;
+#elif BENCHMARK_POWER
+  // TODO
+  return 0;
+#endif
+  
+  // Run the factory calibration screen if settings load says this is the first time
+  if (needs_factory_init) {
+    factory_init();
   }
-  SysTick->CTRL = 0x07;     // CLKSRC | ENABLE, interrupt enable
+
+  // Stick procesing library should use our settings
+  analoglib_init(&g_settings.calib_results, &g_settings.stick_config);
+
+  // Done initializing!
+  printf("This is FrogBoard!\n\r");
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-    while (1) {
-    SysTick->LOAD = TIMER_LEN;
-    SysTick->VAL = 1 - 1;     // clear value register
-    g_timer_wrap = 0;
-    for (volatile int i = 0; i < 1000; i++) {
-      analog_data_t out;
-      in.ax1 = INT_N_TO_AX((rand() & 255 - 128), 8);
-      in.ax2 = INT_N_TO_AX((rand() & 255 - 128), 8);
-      analoglib_process(&in, &out, false);
+  bool settings_mode = needs_factory_init || HAL_GPIO_ReadPin(STICK_BTN_GPIO_Port, STICK_BTN_Pin);
+  HAL_LPTIM_Counter_Start(&hlptim1, 32768 / POLL_RATE_HZ);
+  while (1) {
+    if (!g_poll_rdy) {
+      printf("Sanity check failed! Is the main loop taking too long..?\n");
+      break;
     }
-    uint32_t duration = (TIMER_LEN - SysTick->VAL) + (g_timer_wrap * TIMER_LEN);
-    int speed = (int)(24.0e9 /((float)duration));
-    printf("%d\n\r", speed);
-    }
+    main_loop_body(settings_mode);
+    g_poll_rdy = 0;
+
+    HAL_SuspendTick();
+    // TODO: Turn off ADC power subsystem?
+    g_sleeping = 1;
+    HAL_PWREx_EnterSTOP0Mode(PWR_SLEEPENTRY_WFI);
+    g_sleeping = 0;
+    HAL_ResumeTick();
+  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -211,8 +307,10 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSE|RCC_OSCILLATORTYPE_MSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_LSE
+                              |RCC_OSCILLATORTYPE_MSI;
   RCC_OscInitStruct.LSEState = RCC_LSE_ON;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.MSIState = RCC_MSI_ON;
   RCC_OscInitStruct.MSICalibrationValue = 0;
   RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_6;
@@ -356,49 +454,71 @@ static void MX_DAC1_Init(void)
 }
 
 /**
-  * @brief TIM1 Initialization Function
+  * @brief LPTIM1 Initialization Function
   * @param None
   * @retval None
   */
-static void MX_TIM1_Init(void)
+static void MX_LPTIM1_Init(void)
 {
 
-  /* USER CODE BEGIN TIM1_Init 0 */
+  /* USER CODE BEGIN LPTIM1_Init 0 */
 
-  /* USER CODE END TIM1_Init 0 */
+  /* USER CODE END LPTIM1_Init 0 */
 
-  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
-  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  /* USER CODE BEGIN LPTIM1_Init 1 */
 
-  /* USER CODE BEGIN TIM1_Init 1 */
-
-  /* USER CODE END TIM1_Init 1 */
-  htim1.Instance = TIM1;
-  htim1.Init.Prescaler = 0;
-  htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = 65535;
-  htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim1.Init.RepetitionCounter = 0;
-  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
+  /* USER CODE END LPTIM1_Init 1 */
+  hlptim1.Instance = LPTIM1;
+  hlptim1.Init.Clock.Source = LPTIM_CLOCKSOURCE_APBCLOCK_LPOSC;
+  hlptim1.Init.Clock.Prescaler = LPTIM_PRESCALER_DIV1;
+  hlptim1.Init.Trigger.Source = LPTIM_TRIGSOURCE_SOFTWARE;
+  hlptim1.Init.OutputPolarity = LPTIM_OUTPUTPOLARITY_HIGH;
+  hlptim1.Init.UpdateMode = LPTIM_UPDATE_IMMEDIATE;
+  hlptim1.Init.CounterSource = LPTIM_COUNTERSOURCE_INTERNAL;
+  hlptim1.Init.Input1Source = LPTIM_INPUT1SOURCE_GPIO;
+  hlptim1.Init.Input2Source = LPTIM_INPUT2SOURCE_GPIO;
+  if (HAL_LPTIM_Init(&hlptim1) != HAL_OK)
   {
     Error_Handler();
   }
-  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-  if (HAL_TIM_ConfigClockSource(&htim1, &sClockSourceConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-  sMasterConfig.MasterOutputTrigger2 = TIM_TRGO2_RESET;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN TIM1_Init 2 */
+  /* USER CODE BEGIN LPTIM1_Init 2 */
 
-  /* USER CODE END TIM1_Init 2 */
+  /* USER CODE END LPTIM1_Init 2 */
+
+}
+
+/**
+  * @brief USART1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART1_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART1_Init 0 */
+
+  /* USER CODE END USART1_Init 0 */
+
+  /* USER CODE BEGIN USART1_Init 1 */
+
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 115200;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART1_Init 2 */
+
+  /* USER CODE END USART1_Init 2 */
 
 }
 
@@ -463,6 +583,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LD3_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : STICK_BTN_Pin */
+  GPIO_InitStruct.Pin = STICK_BTN_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(STICK_BTN_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
