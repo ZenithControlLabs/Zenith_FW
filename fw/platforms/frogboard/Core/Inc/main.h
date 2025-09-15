@@ -71,6 +71,8 @@ void Error_Handler(void);
 #define AX_IN_GPIO_Port GPIOA
 #define AY_IN_Pin GPIO_PIN_7
 #define AY_IN_GPIO_Port GPIOA
+#define STICK_BTN_Pin GPIO_PIN_0
+#define STICK_BTN_GPIO_Port GPIOB
 #define SWDIO_Pin GPIO_PIN_13
 #define SWDIO_GPIO_Port GPIOA
 #define SWCLK_Pin GPIO_PIN_14
@@ -79,8 +81,6 @@ void Error_Handler(void);
 #define VCP_RX_GPIO_Port GPIOA
 #define LD3_Pin GPIO_PIN_3
 #define LD3_GPIO_Port GPIOB
-#define STICK_BTN_Pin GPIO_PIN_7
-#define STICK_BTN_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

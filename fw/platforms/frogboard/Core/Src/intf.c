@@ -3,7 +3,7 @@
 DAC_HandleTypeDef *g_intf_hdac = NULL;
 
 static inline void write_dac_xy(uint16_t x, uint16_t y) {
-  HAL_DAC_SetValue(g_intf_hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, (x << 16) | y);
+  
 }
 
 /**
@@ -13,9 +13,6 @@ static inline void write_dac_xy(uint16_t x, uint16_t y) {
   */
 void intf_init(DAC_HandleTypeDef *hdac) {
     g_intf_hdac = hdac;
-    HAL_DAC_Start(g_intf_hdac, DAC_CHANNEL_1);
-    HAL_DAC_Start(g_intf_hdac, DAC_CHANNEL_2);
-    DAC1->DHR12RD = 0;
 }
 
 /**
@@ -26,7 +23,9 @@ void intf_init(DAC_HandleTypeDef *hdac) {
   * @param  y: signed 16-bit y coord (center 0)
   * @retval None
   */
-void intf_out(int16_t x, int16_t y) {}
+void intf_out(int16_t x, int16_t y) {
+  DAC1->DHR12RD = (((x >> 4) + 2048) << 16) | ((y >> 4) + 2048);
+}
 
 /**
   * @brief  Are we in analog (DAC) mode, or in I2C?

@@ -23,6 +23,7 @@
 /* USER CODE BEGIN Includes */
 #include <stdlib.h>
 #include <stdio.h>
+#include "stm32l4xx_hal.h"
 #include "stm32l4xx_hal_adc.h"
 #include "stm32l4xx_hal_conf.h"
 #include "stm32l4xx_hal_dac.h"
@@ -49,6 +50,8 @@ typedef struct {
 /* USER CODE BEGIN PD */
 #define TIMER_LEN ((1 << 24) - 1)
 #define POLL_RATE_HZ 2048
+
+//#define BENCHMARK_SPEED
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -86,20 +89,38 @@ static void MX_LPTIM1_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-// TODO
-static inline uint16_t read_adc_x() {
-  return 0;
-}
-static inline uint16_t read_adc_y() {
-  return 0;
+static inline uint32_t read_adc() {
+  HAL_StatusTypeDef status = HAL_ADC_Start(&hadc1);
+  if (status != HAL_OK) {
+    Error_Handler();
+  }
+  uint32_t res = 0;
+  int done = 0;
+  /*while (!done) {
+    while ((hadc1.Instance->ISR & ADC_ISR_EOC) == 0) { 
+      asm volatile ("");
+    }
+    done = hadc1.Instance->ISR & ADC_ISR_EOS;
+    res = (res << 16) | hadc1.Instance->DR;
+  }*/
+  for( int i=0; i<2; ++i) {
+      status = HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+      if (status != HAL_OK) {
+        Error_Handler();
+      }
+      res = (res << 16) | HAL_ADC_GetValue(&hadc1);
+    }
+
+  HAL_ADC_Stop(&hadc1);
+  return res;
 }
 
 // TODO: make an enum for the steps here
 void factory_init() {
   int step = 0;
   while (step < 2) {
-    uint16_t ax_in = read_adc_x();
-    uint16_t ay_in = read_adc_y();
+    uint16_t ax_in = 0; //read_adc_x();
+    uint16_t ay_in = 0; //read_adc_y();
     if (step == 0) { // Step 0: polairty calibration 
     } else {
       // ...
@@ -109,7 +130,7 @@ void factory_init() {
 }
 
 void speed_benchmark() {
-  printf("This is FrogBoard! (speed benchmark)\n\r");
+  debug_print("This is FrogBoard! (speed benchmark)\n\r");
   vec2_t calibration_points_in[] = {
     { 3, 0 },
     { 96, 0 },
@@ -153,25 +174,39 @@ void speed_benchmark() {
     analoglib_cal_advance(&in);
   }
   SysTick->CTRL = 0x07;     // CLKSRC | ENABLE, interrupt enable
+  int thing = 0;
   while (1) {
+    SysTick->LOAD = TIMER_LEN;
+    SysTick->VAL = 1-1;
+    g_timer_wrap = 0;
+    analog_data_t out;
     for (volatile int i = 0; i < 1000; i++) {
-      analog_data_t out;
       in.ax1 = INT_N_TO_AX((rand() & 255 - 128), 8);
       in.ax2 = INT_N_TO_AX((rand() & 255 - 128), 8);
       analoglib_process(&in, &out, false);
     }
     uint32_t duration = (TIMER_LEN - SysTick->VAL) + (g_timer_wrap * TIMER_LEN);
     int speed = (int)(24.0e9 /((float)duration));
-    printf("%d\n\r", speed);
+    debug_print("%d\n\r", speed);
+    HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
+    intf_out(AX_TO_INT16(out.ax1),AX_TO_INT16(out.ax2));
+    thing++;
+    if ((thing & 15) == 0) {
+      intf_out(0,0);
+      for (volatile int i = 0; i < 1000000; i++) {
+      }
+    }
   }
 }
 
 static inline void main_loop_body(bool settings_mode) {
+  static int cnt = 0;
   analog_data_t in;
   analog_data_t out;
     // Read ADC
-    uint16_t ax_in = read_adc_x();
-    uint16_t ay_in = read_adc_y(); 
+    uint32_t a_in = read_adc();
+    uint16_t ax_in = a_in >> 16;
+    uint16_t ay_in = a_in; 
 
     // In Phobri stickboard emulation mode? Send out the raw ADC reading
     if (!intf_is_mode_analog()) {
@@ -179,18 +214,24 @@ static inline void main_loop_body(bool settings_mode) {
       return;
     }
 
-    in.ax1 = INT_N_TO_AX(ax_in, 8);
-    in.ax2 = INT_N_TO_AX(ay_in, 8);
+    in.ax1 = -UINT_N_TO_AX(ax_in, 12);
+    in.ax2 = -UINT_N_TO_AX(ay_in, 12);
 
     // Process, either normal or we are in settings menu
     if (settings_mode) {
       bool btn_press = HAL_GPIO_ReadPin(STICK_BTN_GPIO_Port, STICK_BTN_Pin);
       menu_process(&in, &out, btn_press);
     } else {
-      analoglib_process(&in, &out, false);
+      //analoglib_process(&in, &out, false);
+      out.ax1 = in.ax1;
+      out.ax2 = in.ax2;
     } 
 
-    intf_out(AX_TO_INT16(out.ax1), AX_TO_INT16(out.ax2));  
+    intf_out(AX_TO_INT16(out.ax1), AX_TO_INT16(out.ax2)); 
+    if ((cnt & 4095) == 0) {
+      HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
+    }
+    cnt++; 
 }
 
 /* USER CODE END 0 */
@@ -203,7 +244,6 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -212,7 +252,10 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  MX_DAC1_Init();
+  HAL_DAC_Start(&hdac1, DAC_CHANNEL_1);
+  HAL_DAC_Start(&hdac1, DAC_CHANNEL_2);
+  DAC1->DHR12RD = (2048) << 16 | (2048);
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -225,7 +268,6 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_ADC1_Init();
-  MX_DAC1_Init();
   MX_USART2_UART_Init();
   MX_USART1_UART_Init();
   MX_LPTIM1_Init();
@@ -254,27 +296,31 @@ int main(void)
   analoglib_init(&g_settings.calib_results, &g_settings.stick_config);
 
   // Done initializing!
-  printf("This is FrogBoard!\n\r");
+  debug_print("This is FrogBoard!\n\r");
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   bool settings_mode = needs_factory_init || HAL_GPIO_ReadPin(STICK_BTN_GPIO_Port, STICK_BTN_Pin);
+  
+  LPTIM1->IER = LPTIM_IER_ARRMIE;
   HAL_LPTIM_Counter_Start(&hlptim1, 32768 / POLL_RATE_HZ);
   while (1) {
     if (!g_poll_rdy) {
-      printf("Sanity check failed! Is the main loop taking too long..?\n");
+      debug_print("Sanity check failed! Is the main loop taking too long..?\n");
       break;
     }
-    main_loop_body(settings_mode);
-    g_poll_rdy = 0;
-
+    main_loop_body(false);
+    g_poll_rdy = 1;
+/*
     HAL_SuspendTick();
     // TODO: Turn off ADC power subsystem?
+    // TODO 2: already turning off ADC power subsystem??
+    // ADC doesn't work with this enabled... Is it too slow?
     g_sleeping = 1;
     HAL_PWREx_EnterSTOP0Mode(PWR_SLEEPENTRY_WFI);
     g_sleeping = 0;
-    HAL_ResumeTick();
+    HAL_ResumeTick();*/
   }
     /* USER CODE END WHILE */
 
@@ -369,11 +415,11 @@ static void MX_ADC1_Init(void)
   hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV1;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc1.Init.ScanConvMode = ADC_SCAN_DISABLE;
+  hadc1.Init.ScanConvMode = ADC_SCAN_ENABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
   hadc1.Init.LowPowerAutoWait = DISABLE;
   hadc1.Init.ContinuousConvMode = DISABLE;
-  hadc1.Init.NbrOfConversion = 1;
+  hadc1.Init.NbrOfConversion = 2;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
@@ -389,7 +435,7 @@ static void MX_ADC1_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_11;
   sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_2CYCLES_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_640CYCLES_5;
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
   sConfig.OffsetNumber = ADC_OFFSET_NONE;
   sConfig.Offset = 0;
@@ -397,8 +443,17 @@ static void MX_ADC1_Init(void)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN ADC1_Init 2 */
 
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_12;
+  sConfig.Rank = ADC_REGULAR_RANK_2;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC1_Init 2 */
+  HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
   /* USER CODE END ADC1_Init 2 */
 
 }
@@ -412,6 +467,11 @@ static void MX_DAC1_Init(void)
 {
 
   /* USER CODE BEGIN DAC1_Init 0 */
+  RCC->APB1ENR1 |= RCC_APB1ENR1_DAC1EN;
+
+  // 2. (CRITICAL FOR ROBUSTNESS) Force a reset of the DAC peripheral
+  RCC->APB1RSTR1 |= RCC_APB1RSTR1_DAC1RST; // Assert reset
+  RCC->APB1RSTR1 &= ~RCC_APB1RSTR1_DAC1RST; // De-assert reset
 
   /* USER CODE END DAC1_Init 0 */
 
@@ -448,7 +508,6 @@ static void MX_DAC1_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN DAC1_Init 2 */
-
   /* USER CODE END DAC1_Init 2 */
 
 }
@@ -577,18 +636,18 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin : STICK_BTN_Pin */
+  GPIO_InitStruct.Pin = STICK_BTN_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(STICK_BTN_GPIO_Port, &GPIO_InitStruct);
+
   /*Configure GPIO pin : LD3_Pin */
   GPIO_InitStruct.Pin = LD3_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LD3_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : STICK_BTN_Pin */
-  GPIO_InitStruct.Pin = STICK_BTN_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(STICK_BTN_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
@@ -628,7 +687,7 @@ void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+     ex: debug_print("Wrong parameters value: file %s on line %d\r\n", file, line) */
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
