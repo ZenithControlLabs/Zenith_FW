@@ -27,6 +27,7 @@
 #include "stm32l4xx_hal_adc.h"
 #include "stm32l4xx_hal_conf.h"
 #include "stm32l4xx_hal_dac.h"
+#include "stm32l4xx_hal_flash.h"
 #include "stm32l4xx_hal_gpio.h"
 #include "stm32l4xx_hal_lptim.h"
 
@@ -50,7 +51,6 @@ typedef struct {
 /* USER CODE BEGIN PD */
 #define TIMER_LEN ((1 << 24) - 1)
 #define POLL_RATE_HZ 2048
-
 //#define BENCHMARK_SPEED
 /* USER CODE END PD */
 
@@ -72,6 +72,7 @@ UART_HandleTypeDef huart2;
 /* USER CODE BEGIN PV */
 volatile int g_poll_rdy = 1;
 volatile int g_sleeping = 0;
+uint16_t g_adc_res[2];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -89,39 +90,7 @@ static void MX_LPTIM1_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-static inline uint32_t read_adc() {
-  HAL_StatusTypeDef status = HAL_ADC_Start(&hadc1);
-  if (status != HAL_OK) {
-    Error_Handler();
-  }
-  volatile uint32_t res = 0;
-  int done = 0;
-  while (!done) {
-    while ((hadc1.Instance->ISR & ADC_ISR_EOC) == 0) { 
-      asm volatile ("");
-    }
-    done = hadc1.Instance->ISR & ADC_ISR_EOS;
-    res = (res << 16) | hadc1.Instance->DR;
-  }
-
-  HAL_ADC_Stop(&hadc1);
-  return res;
-}
-
-// TODO: make an enum for the steps here
-void factory_init() {
-  int step = 0;
-  while (step < 2) {
-    uint16_t ax_in = 0; //read_adc_x();
-    uint16_t ay_in = 0; //read_adc_y();
-    if (step == 0) { // Step 0: polairty calibration 
-    } else {
-      // ...
-    }
-    intf_out(0, 0);
-  }
-}
-
+#ifdef BENCHMARK_SPEED
 void speed_benchmark() {
   debug_print("This is FrogBoard! (speed benchmark)\n\r");
   vec2_t calibration_points_in[] = {
@@ -191,33 +160,32 @@ void speed_benchmark() {
     }
   }
 }
+#endif
 
 static inline void main_loop_body(bool settings_mode) {
   static int cnt = 0;
   analog_data_t in;
   analog_data_t out;
     // Read ADC
-    uint32_t a_in = read_adc();
-    uint16_t ax_in = a_in >> 16;
-    uint16_t ay_in = a_in; 
+    adc_read(&hadc1, g_adc_res, true);
 
     // In Phobri stickboard emulation mode? Send out the raw ADC reading
     if (!intf_is_mode_analog()) {
-      intf_out(ax_in, ay_in);
+      intf_out(g_adc_res[CHAN_X], g_adc_res[CHAN_Y]);
       return;
     }
 
-    in.ax1 = -UINT_N_TO_AX(ax_in, 12);
-    in.ax2 = -UINT_N_TO_AX(ay_in, 12);
+    in.ax1 = UINT_N_TO_AX(g_adc_res[CHAN_X], 12);
+    in.ax2 = UINT_N_TO_AX(g_adc_res[CHAN_Y], 12);
 
     // Process, either normal or we are in settings menu
+    out.ax1 = in.ax1;
+    out.ax2 = in.ax2;
     if (settings_mode) {
       bool btn_press = HAL_GPIO_ReadPin(STICK_BTN_GPIO_Port, STICK_BTN_Pin);
       menu_process(&in, &out, btn_press);
     } else {
-      //analoglib_process(&in, &out, false);
-      out.ax1 = in.ax1;
-      out.ax2 = in.ax2;
+      analoglib_process(&in, &out, false);
     } 
 
     intf_out(AX_TO_INT16(out.ax1), AX_TO_INT16(out.ax2)); 
@@ -301,9 +269,9 @@ int main(void)
   while (1) {
     if (!g_poll_rdy) {
       debug_print("Sanity check failed! Is the main loop taking too long..?\n");
-      break;
+      Error_Handler();
     }
-    main_loop_body(false);
+    main_loop_body(settings_mode);
     g_poll_rdy = 0;
 
     HAL_ADC_DeInit(&hadc1);
@@ -632,7 +600,7 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin : STICK_BTN_Pin */
   GPIO_InitStruct.Pin = STICK_BTN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(STICK_BTN_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : LD3_Pin */

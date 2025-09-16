@@ -3,6 +3,7 @@
 
 #include "stick_types.h"
 #include <stdbool.h>
+#include <stdint.h>
 
 void menu_process(analog_data_t *in, analog_data_t *out, bool btn_press);
 
