@@ -226,7 +226,7 @@ void notch_calibrate(const ax_t in_points_x[], const ax_t in_points_y[],
             calib_results->boundary_angles[0]) {
             calib_results->boundary_angles[cur] += M_PI * 2;
         }
-        debug_print("Boundary angle for region %d: %f\n", cur,
-                    calib_results->boundary_angles[cur]);
+        debug_print("Boundary angle for region %d: %d\n\r", cur,
+                    (uint32_t)(calib_results->boundary_angles[cur] * (180.)/M_PI));
     }
 }

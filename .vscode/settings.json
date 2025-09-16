@@ -14,5 +14,6 @@
         "zenith.h": "c",
         "stick.h": "c",
         "stick_task.h": "c"
-    }
+    },
+    "cortex-debug.variableUseNaturalFormat": false
 }

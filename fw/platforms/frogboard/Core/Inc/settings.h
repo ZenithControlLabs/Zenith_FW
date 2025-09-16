@@ -5,7 +5,7 @@
 #include "intf.h"
 
 // Last page of flash
-#define SETTINGS_FLASH_ADDR 0x080FF000
+#define SETTINGS_FLASH_ADDR 0x08020000
 // Magic data
 #define MAGIC 0xCAFEBEEFDEADBABE
 
@@ -25,8 +25,9 @@ typedef struct {
 #define SETTINGS_SIZE_DOUBLEWORDS (sizeof(settings_t) + ((1<<3)-1)) >> 3
 
 extern settings_t g_settings;
-extern const uint64_t g_magic;
+extern volatile const uint64_t g_magic;
 
+void settings_reset_to_factory();
 bool settings_load();
 void settings_flush();
 
