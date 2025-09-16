@@ -94,22 +94,15 @@ static inline uint32_t read_adc() {
   if (status != HAL_OK) {
     Error_Handler();
   }
-  uint32_t res = 0;
+  volatile uint32_t res = 0;
   int done = 0;
-  /*while (!done) {
+  while (!done) {
     while ((hadc1.Instance->ISR & ADC_ISR_EOC) == 0) { 
       asm volatile ("");
     }
     done = hadc1.Instance->ISR & ADC_ISR_EOS;
     res = (res << 16) | hadc1.Instance->DR;
-  }*/
-  for( int i=0; i<2; ++i) {
-      status = HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
-      if (status != HAL_OK) {
-        Error_Handler();
-      }
-      res = (res << 16) | HAL_ADC_GetValue(&hadc1);
-    }
+  }
 
   HAL_ADC_Stop(&hadc1);
   return res;
@@ -228,7 +221,7 @@ static inline void main_loop_body(bool settings_mode) {
     } 
 
     intf_out(AX_TO_INT16(out.ax1), AX_TO_INT16(out.ax2)); 
-    if ((cnt & 4095) == 0) {
+    if ((cnt & 255) == 0) {
       HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
     }
     cnt++; 
@@ -311,16 +304,16 @@ int main(void)
       break;
     }
     main_loop_body(false);
-    g_poll_rdy = 1;
-/*
+    g_poll_rdy = 0;
+
+    HAL_ADC_DeInit(&hadc1);
+    LL_ADC_DisableInternalRegulator(hadc1.Instance);
     HAL_SuspendTick();
-    // TODO: Turn off ADC power subsystem?
-    // TODO 2: already turning off ADC power subsystem??
-    // ADC doesn't work with this enabled... Is it too slow?
     g_sleeping = 1;
     HAL_PWREx_EnterSTOP0Mode(PWR_SLEEPENTRY_WFI);
     g_sleeping = 0;
-    HAL_ResumeTick();*/
+    HAL_ResumeTick();
+    MX_ADC1_Init();
   }
     /* USER CODE END WHILE */
 
