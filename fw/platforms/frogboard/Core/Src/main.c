@@ -167,7 +167,7 @@ static inline void main_loop_body(bool settings_mode) {
   analog_data_t in;
   analog_data_t out;
     // Read ADC
-    adc_read(&hadc1, g_adc_res, true);
+    adc_read(&hadc1, g_adc_res, false);
 
     // In Phobri stickboard emulation mode? Send out the raw ADC reading
     if (!intf_is_mode_analog()) {
@@ -179,8 +179,6 @@ static inline void main_loop_body(bool settings_mode) {
     in.ax2 = UINT_N_TO_AX(g_adc_res[CHAN_Y], 12);
 
     // Process, either normal or we are in settings menu
-    out.ax1 = in.ax1;
-    out.ax2 = in.ax2;
     if (settings_mode) {
       bool btn_press = HAL_GPIO_ReadPin(STICK_BTN_GPIO_Port, STICK_BTN_Pin);
       menu_process(&in, &out, btn_press);
@@ -243,18 +241,18 @@ int main(void)
 #ifdef BENCHMARK_SPEED
   speed_benchmark();
   return 0;
-#elif BENCHMARK_POWER
+  #elif BENCHMARK_POWER
   // TODO
   return 0;
-#endif
-  
-  // Run the factory calibration screen if settings load says this is the first time
-  if (needs_factory_init) {
-    factory_init();
-  }
+  #endif
 
   // Stick procesing library should use our settings
   analoglib_init(&g_settings.calib_results, &g_settings.stick_config);
+  
+  // Run the factory calibration process if settings load says this is the first time
+  if (needs_factory_init) {
+    factory_init(&hadc1);
+  }
 
   // Done initializing!
   debug_print("This is FrogBoard!\n\r");
@@ -271,7 +269,7 @@ int main(void)
       debug_print("Sanity check failed! Is the main loop taking too long..?\n");
       Error_Handler();
     }
-    main_loop_body(settings_mode);
+    main_loop_body(false);
     g_poll_rdy = 0;
 
     HAL_ADC_DeInit(&hadc1);

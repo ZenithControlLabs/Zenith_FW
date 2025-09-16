@@ -47,7 +47,8 @@ void intf_init(DAC_HandleTypeDef *hdac) {
   * @retval None
   */
 void intf_out(int16_t x, int16_t y) {
-  DAC1->DHR12RD = (((x >> 4) + 2048) << 16) | ((y >> 4) + 2048);
+  // y flipped cuz it is  ¯\_(ツ)_/¯ 
+  DAC1->DHR12RD = (((x >> 4) + 2048) << 16) | (((-y) >> 4) + 2048);
 }
 
 /**
