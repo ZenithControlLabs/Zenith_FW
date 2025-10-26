@@ -74,6 +74,20 @@ export async function updateMagThresh(elemName) {
     (new Float32Array(buf))[1] = new_thresh / 100.;
     buf = (new Uint8Array(buf));
     buf[0] = WebUSBCmdMap.MAG_THRESH_SET;
+    await usbDevice.transferOut(2, buf);
+    setSaveIndicator();
+}
+
+export async function updateLpfCutoff(elemName) {
+    let new_cutoff = elemName.value;
+    if (new_cutoff < 0) {
+        new_cutoff = 0;
+        elemName.value = 0;
+    }
+    let buf = new ArrayBuffer(8);
+    (new Float32Array(buf))[1] = new_cutoff / 1.0;
+    buf = (new Uint8Array(buf));
+    buf[0] = WebUSBCmdMap.LPF_CUTOFF_SET;
     console.log(buf);
     await usbDevice.transferOut(2, buf);
     setSaveIndicator();
@@ -114,4 +128,10 @@ export function placeGateLimiter(data) {
     } else {
         gate_limiter_enable.checked = false;
     }
+}
+
+export function placeLpfCutoff(data) {
+    console.log(data);
+    let lpf_cutoff_elem = /** @type {HTMLInputElement} */ (document.getElementById(`lpf-cutoff-hz`));    
+    lpf_cutoff_elem.value = (IntToFloat32(swap32(data.getUint32(4)))).toFixed(2);   
 }

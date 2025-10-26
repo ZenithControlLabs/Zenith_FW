@@ -247,7 +247,7 @@ int main(void)
   #endif
 
   // Stick procesing library should use our settings
-  analoglib_init(&g_settings.calib_results, &g_settings.stick_config);
+  analoglib_init(&g_settings.calib_results, &g_settings.stick_config, 1/2000.f);
   
   // Run the factory calibration process if settings load says this is the first time
   if (needs_factory_init) {

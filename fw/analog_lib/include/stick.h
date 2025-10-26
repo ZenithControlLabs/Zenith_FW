@@ -32,6 +32,7 @@ typedef struct {
     ax_t notch_points_y[NUM_NOTCHES];
     float angle_deadzones[NUM_NOTCHES];
     float mag_threshold;
+    float cutoff_hz;
 } stick_config_t;
 
 #define CALIBRATION_NUM_STEPS NUM_NOTCHES * 2
@@ -40,7 +41,9 @@ extern volatile int _cal_step;
 
 typedef enum { CALIB_NONE, CALIB_ADVANCE, CALIB_UNDO } cal_msg_t;
 
-void analoglib_init(calib_results_t *settings_calib_results, stick_config_t *settings_stick_config);
+extern float al_g_dt;
+
+void analoglib_init(calib_results_t *settings_calib_results, stick_config_t *settings_stick_config, const float dt);
 
 void analoglib_cal_advance(analog_data_t *in);
 

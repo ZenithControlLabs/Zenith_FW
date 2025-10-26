@@ -64,7 +64,7 @@ void zenith_start() {
 
     comms_init();
 
-    analoglib_init(&_settings[_profile].calib_results, &_settings[_profile].stick_config);
+    analoglib_init(&_settings[_profile].calib_results, &_settings[_profile].stick_config, 1/((float)ZTH_STICK_INTERVAL));
 
     multicore_lockout_victim_init();
 

@@ -1,9 +1,11 @@
 #include "stick.h"
 #include "notch_remap.h"
 #include "linearize.h"
+#include "snapback_filter.h"
 
 calib_results_t* al_g_calib_results;
 stick_config_t* al_g_stick_config;
+float al_g_dt = 0;
 
 volatile int _cal_step = 0;
 ax_t raw_cal_points_x[CALIBRATION_NUM_STEPS];
@@ -185,9 +187,10 @@ void analoglib_cal_undo(void) {
 }
 
 
-void analoglib_init(calib_results_t *settings_calib_results, stick_config_t *settings_stick_config) {
+void analoglib_init(calib_results_t *settings_calib_results, stick_config_t *settings_stick_config, const float dt) {
     al_g_calib_results = settings_calib_results;
     al_g_stick_config = settings_stick_config;
+    al_g_dt = dt;
 }
 
 void analoglib_process(analog_data_t *in, analog_data_t *out,
@@ -205,8 +208,11 @@ void analoglib_process(analog_data_t *in, analog_data_t *out,
     notch_remap(notch_remap_in_x, notch_remap_in_y, &remapped_x, &remapped_y,
                 gate_limiter_enable, al_g_calib_results, al_g_stick_config);
 
-    out->ax1 = fmin(1.0, fmax(-1.0, remapped_x));
-    out->ax2 = fmin(1.0, fmax(-1.0, remapped_y));
+    ax_t filtered_x, filtered_y;
+    snapback_filter(remapped_x, remapped_y, &filtered_x, &filtered_y, al_g_stick_config);
+
+    out->ax1 = fmin(1.0, fmax(-1.0, filtered_x));
+    out->ax2 = fmin(1.0, fmax(-1.0, filtered_y));
 }
 
 
