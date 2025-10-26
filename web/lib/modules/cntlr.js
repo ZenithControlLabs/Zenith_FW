@@ -4,7 +4,7 @@
 import { sleep_ms } from "./utils.js";
 import { placeCalibStatus } from "./zenith_calib.js";
 import { updateInputDisplay } from "./zenith_input.js";
-import { placeGateLimiter, placeMagThresh, placeNotches } from "./zenith_notch.js";
+import { placeGateLimiter, placeLpfCutoff, placeMagThresh, placeNotches } from "./zenith_notch.js";
 import { CommsMode, _commsMode, placeRemapping, setCommsMode } from "./zenith_remap.js";
 
 const filters = {filters: [{
@@ -27,6 +27,8 @@ export const WebUSBCmdMap = {
     MAG_THRESH_GET: 0xA6,
     GATE_LIMITER_SET: 0x07,
     GATE_LIMITER_GET: 0xA7,
+    LPF_CUTOFF_SET: 0x08,
+    LPF_CUTOFF_GET: 0xA8,
     UPDATE_FW: 0xF1,
     COMMIT_SETTINGS: 0xF2,
     RESET_SETTINGS: 0xF3
@@ -179,6 +181,10 @@ const listen = async () => {
                 placeGateLimiter(result.data);
                 break;
             }
+            case WebUSBCmdMap.LPF_CUTOFF_GET: {
+                placeLpfCutoff(result.data);
+                break;
+            }
             case WebUSBCmdMap.FW_GET: {
                 placeVersion(result.data);
                 break;
@@ -219,6 +225,8 @@ async function loadAllSettings() {
     await writeUSBCmd(WebUSBCmdMap.MAG_THRESH_GET);
     await sleep_ms(100);
     await writeUSBCmd(WebUSBCmdMap.GATE_LIMITER_GET);
+    await sleep_ms(100);
+    await writeUSBCmd(WebUSBCmdMap.LPF_CUTOFF_GET);
     await sleep_ms(100);
     await setCommsMode(CommsMode.N64);
 }

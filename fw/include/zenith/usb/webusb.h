@@ -4,8 +4,6 @@
 #include <math.h>
 #include <stdint.h>
 
-extern bool _webusb_output_enabled;
-
 typedef enum {
     // Get firmware version
     WEBUSB_CMD_FW_GET = 0xA1,
@@ -26,6 +24,9 @@ typedef enum {
 
     WEBUSB_CMD_GATE_LIMITER_SET = 0x07,
     WEBUSB_CMD_GATE_LIMITER_GET = 0xA7,
+
+    WEBUSB_CMD_LPF_CUTOFF_SET = 0x08,
+    WEBUSB_CMD_LPF_CUTOFF_GET = 0xA8,
 
     WEBUSB_CMD_UPDATE_FW = 0xF1,
     WEBUSB_CMD_COMMIT_SETTINGS = 0xF2,

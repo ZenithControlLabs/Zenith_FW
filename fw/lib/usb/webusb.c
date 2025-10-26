@@ -4,7 +4,6 @@
 const char* git_version = GIT_VERSION;
 
 uint8_t _webusb_out_buffer[64] = {0x00};
-bool _webusb_output_enabled = false;
 int _webusb_output_cnt = 0;
 
 void webusb_save_confirm() {
@@ -26,7 +25,6 @@ bool webusb_ready_blocking(int timeout) {
 
         if (!internal) {
             debug_print("Disabling webusb output..\n");
-            _webusb_output_enabled = false;
             return false;
         }
 
@@ -40,7 +38,6 @@ bool webusb_ready_blocking(int timeout) {
 
 void webusb_command_processor(uint8_t *data, const uint32_t data_size) {
     (void) data_size;
-    _webusb_output_enabled = true;
 
     if ((data[0] & WEBUSB_CMD_USER_MASK) == WEBUSB_CMD_USER_VAL) {
         bool perform_write =
@@ -52,6 +49,7 @@ void webusb_command_processor(uint8_t *data, const uint32_t data_size) {
         return;
     }
 
+    bool webusb_output_en = false;
     switch (data[0]) {
     case WEBUSB_CMD_FW_GET: {
         _webusb_out_buffer[0] = WEBUSB_CMD_FW_GET;
@@ -61,11 +59,7 @@ void webusb_command_processor(uint8_t *data, const uint32_t data_size) {
         if (verslen < (64 - 3)) {
             memcpy(_webusb_out_buffer+3, git_version, verslen+1);
         }
-        if (webusb_ready_blocking(5000)) {
-            tud_vendor_n_write(0, _webusb_out_buffer, 64);
-            tud_vendor_n_flush(0);
-        }
-        _webusb_output_enabled = true;
+        webusb_output_en = true;
     } break;
 
     case WEBUSB_CMD_CALIBRATION_STATUS_GET: {
@@ -73,11 +67,7 @@ void webusb_command_processor(uint8_t *data, const uint32_t data_size) {
         _webusb_out_buffer[0] = WEBUSB_CMD_CALIBRATION_STATUS_GET;
         _webusb_out_buffer[1] = _settings[_profile].calib_results.calibrated;
         _webusb_out_buffer[2] = _cal_step;
-        if (webusb_ready_blocking(5000)) {
-            tud_vendor_n_write(0, _webusb_out_buffer, 64);
-            tud_vendor_n_flush(0);
-        }
-        _webusb_output_enabled = true;
+        webusb_output_en = true;
     } break;
 
     case WEBUSB_CMD_CALIBRATION_START: {
@@ -88,7 +78,6 @@ void webusb_command_processor(uint8_t *data, const uint32_t data_size) {
                         _cal_step, CALIBRATION_NUM_STEPS);
         }
         _webusb_out_buffer[0] = WEBUSB_CMD_CALIBRATION_START;
-
     } break;
 
     case WEBUSB_CMD_CALIBRATION_ADVANCE: {
@@ -96,20 +85,14 @@ void webusb_command_processor(uint8_t *data, const uint32_t data_size) {
         debug_print("WebUSB: Got calibration ADVANCE command. (msg=%d)\n",
                     _cal_msg);
         _webusb_out_buffer[0] = WEBUSB_CMD_CALIBRATION_ADVANCE;
-        if (webusb_ready_blocking(5000)) {
-            tud_vendor_n_write(0, _webusb_out_buffer, 64);
-            tud_vendor_n_flush(0);
-        }
+        webusb_output_en = true;
     } break;
 
     case WEBUSB_CMD_CALIBRATION_UNDO: {
         debug_print("WebUSB: Got calibration UNDO command.\n");
         atomic_store(&_cal_msg, CALIB_UNDO);
         _webusb_out_buffer[0] = WEBUSB_CMD_CALIBRATION_UNDO;
-        if (webusb_ready_blocking(5000)) {
-            tud_vendor_n_write(0, _webusb_out_buffer, 64);
-            tud_vendor_n_flush(0);
-        }
+        webusb_output_en = true;
     } break;
 
     case WEBUSB_CMD_NOTCH_SET: {
@@ -144,10 +127,7 @@ void webusb_command_processor(uint8_t *data, const uint32_t data_size) {
             memcpy(_webusb_out_buffer + (i * 6 + 3),
                    _settings[_profile].stick_config.angle_deadzones + i, sizeof(float));
         }
-        if (webusb_ready_blocking(5000)) {
-            tud_vendor_n_write(0, _webusb_out_buffer, 64);
-            tud_vendor_n_flush(0);
-        }
+        webusb_output_en = true;
     } break;
 
     case WEBUSB_CMD_REMAP_SET: {
@@ -184,10 +164,7 @@ void webusb_command_processor(uint8_t *data, const uint32_t data_size) {
             break;
         }
         }
-        if (webusb_ready_blocking(5000)) {
-            tud_vendor_n_write(0, _webusb_out_buffer, 64);
-            tud_vendor_n_flush(0);
-        }
+        webusb_output_en = true;
     } break;
 
     case WEBUSB_CMD_MAG_THRESH_SET: {
@@ -201,10 +178,7 @@ void webusb_command_processor(uint8_t *data, const uint32_t data_size) {
         memcpy(_webusb_out_buffer + 4, &_settings[_profile].stick_config.mag_threshold,
                sizeof(float));
 
-        if (webusb_ready_blocking(5000)) {
-            tud_vendor_n_write(0, _webusb_out_buffer, 64);
-            tud_vendor_n_flush(0);
-        }
+        webusb_output_en = true;
     } break;
 
     case WEBUSB_CMD_GATE_LIMITER_SET: {
@@ -218,10 +192,20 @@ void webusb_command_processor(uint8_t *data, const uint32_t data_size) {
         memcpy(_webusb_out_buffer + 1, &_settings[_profile].gate_limiter_enable,
                sizeof(bool));
 
-        if (webusb_ready_blocking(5000)) {
-            tud_vendor_n_write(0, _webusb_out_buffer, 64);
-            tud_vendor_n_flush(0);
-        }
+        webusb_output_en = true;
+    } break;
+
+    case WEBUSB_CMD_LPF_CUTOFF_SET: {
+        debug_print("WebUSB: Got LPF Cutoff SET command.\n");
+        memcpy(&_settings[_profile].stick_config.cutoff_hz, data+4, sizeof(float));
+    } break;
+
+    case WEBUSB_CMD_LPF_CUTOFF_GET: {
+        debug_print("WebUSB: Got LPF Cutoff GET command.\n");
+        _webusb_out_buffer[0] = WEBUSB_CMD_LPF_CUTOFF_GET;
+        memcpy(_webusb_out_buffer+4, &_settings[_profile].stick_config.cutoff_hz, sizeof(float));
+
+        webusb_output_en = true;
     } break;
 
     case WEBUSB_CMD_UPDATE_FW: {
@@ -238,5 +222,9 @@ void webusb_command_processor(uint8_t *data, const uint32_t data_size) {
     default: {
         break;
     }
+    }
+    if (webusb_output_en && webusb_ready_blocking(5000)) {
+        tud_vendor_n_write(0, _webusb_out_buffer, 64);
+        tud_vendor_n_flush(0);
     }
 }
