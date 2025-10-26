@@ -42,6 +42,7 @@ void zenith_loop_core1(void) {
         if (_profile != last_profile) {
             last_profile = _profile;
             multicore_lockout_start_blocking();
+            analoglib_init(&_settings[_profile].calib_results, &_settings[_profile].stick_config);
             cb_zenith_switch_input(_profile);
             multicore_lockout_end_blocking();
         }
@@ -62,6 +63,8 @@ void zenith_start() {
     usb_init();
 
     comms_init();
+
+    analoglib_init(&_settings[_profile].calib_results, &_settings[_profile].stick_config);
 
     multicore_lockout_victim_init();
 

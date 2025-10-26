@@ -3,7 +3,7 @@
 
 #include "zenith/comms/comms.h"
 #include "zenith/input/btn_remap.h"
-#include "zenith/input/stick.h"
+#include "stick.h"
 
 // Number of settings profiles
 #define PROFILE_COUNT 2

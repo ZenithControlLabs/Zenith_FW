@@ -11,6 +11,9 @@
         "lis3mdl.h": "c",
         "hw_intf.h": "c",
         "phobri_v1_x.h": "c",
-        "zenith.h": "c"
-    }
+        "zenith.h": "c",
+        "stick.h": "c",
+        "stick_task.h": "c"
+    },
+    "cortex-debug.variableUseNaturalFormat": false
 }

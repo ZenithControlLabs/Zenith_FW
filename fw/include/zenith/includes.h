@@ -39,11 +39,9 @@
 #include "zenith/comms/n64_crc.h"
 #include "zenith/comms/comms.h" // For talking over the controller's main protocol (N64, GCC, etc.)
 
+#include "stick.h"
 #include "zenith/input/btn_remap.h"
-#include "zenith/input/stick.h"
-#include "zenith/input/notch_remap.h"
-#include "zenith/input/linearize.h"
-#include "zenith/input/calib.h"
+#include "zenith/input/stick_task.h"
 
 // clang-format on
 

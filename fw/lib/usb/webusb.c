@@ -1,4 +1,5 @@
 #include "zenith/includes.h"
+#include "notch_remap.h"
 
 const char* git_version = GIT_VERSION;
 
