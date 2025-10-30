@@ -10,17 +10,8 @@
 #define MAGIC 0xCAFEBEEFDEADBABE
 
 typedef struct {
-    float x_m;
-    float x_b;
-    float y_m;
-    float y_b;
-} dac_calib_t;
-
-typedef struct {
     stick_config_t stick_config;
     calib_results_t calib_results;
-    dac_calib_t dac_calib;
-    bool polarity[CHAN_END];
 } settings_t __attribute__((aligned(16)));
 #define SETTINGS_SIZE_DOUBLEWORDS (sizeof(settings_t) + ((1<<3)-1)) >> 3
 

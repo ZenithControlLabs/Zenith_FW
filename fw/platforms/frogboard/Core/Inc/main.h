@@ -43,12 +43,17 @@ extern "C" {
 /* USER CODE BEGIN EC */
 extern int g_timer_wrap;
 extern volatile int g_poll_rdy;
+extern volatile int g_poll_rdy_chk_ignore;
 extern volatile int g_sleeping;
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
-
+#ifdef DEBUG
+#define debug_print(fmt, args...) printf(fmt, ##args)
+#else
+#define debug_print(fmt, args...)
+#endif
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/

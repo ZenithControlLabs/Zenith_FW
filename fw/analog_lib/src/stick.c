@@ -84,13 +84,13 @@ void calibration_finish(void) {
     ax_t cleaned_points_x[NUM_NOTCHES + 1];
     ax_t cleaned_points_y[NUM_NOTCHES + 1];
     for (int i = 0; i < CALIBRATION_NUM_STEPS; i++) {
-        debug_print("Raw Cal point:  %d; (x,y) = (%f, %f)\n\r", i,
+        al_debug_print("Raw Cal point:  %d; (x,y) = (%f, %f)\n\r", i,
                     raw_cal_points_x[i], raw_cal_points_y[i]);
     }
     fold_center_points(raw_cal_points_x, raw_cal_points_y, cleaned_points_x,
                        cleaned_points_y);
     for (int i = 0; i <= NUM_NOTCHES; i++) {
-        debug_print("Clean Cal point:  %d; (x,y) = (%f, %f)\n\r", i,
+        al_debug_print("Clean Cal point:  %d; (x,y) = (%f, %f)\n\r", i,
                     cleaned_points_x[i], cleaned_points_y[i]);
     }
 
@@ -107,7 +107,7 @@ void calibration_finish(void) {
     for (int i = 0; i < NUM_NOTCHES; i++) {
         al_g_calib_results->notch_points_x_in[i] = linearized_points_x[i];
         al_g_calib_results->notch_points_y_in[i] = linearized_points_y[i];
-        debug_print("Linearized point:  %d; (x,y) = (%f, %f)\n", i,
+        al_debug_print("Linearized point:  %d; (x,y) = (%f, %f)\n", i,
                     linearized_points_x[i], linearized_points_y[i]);
     }
 #else
@@ -124,7 +124,7 @@ void calibration_finish(void) {
             (cleaned_points_x[i + 1] - cleaned_points_x[0]) * x_flip;
         al_g_calib_results->notch_points_y_in[i] =
             (cleaned_points_y[i + 1] - cleaned_points_y[0]) * y_flip;
-        debug_print("Notch Point in point:  %d; (x,y) = (%f, %f)\n", i,
+        al_debug_print("Notch Point in point:  %d; (x,y) = (%f, %f)\n", i,
                     al_g_calib_results->notch_points_x_in[i],
                     al_g_calib_results->notch_points_y_in[i]);
     }
@@ -143,9 +143,9 @@ void calibration_finish(void) {
                     al_g_stick_config->notch_points_x,
                     al_g_stick_config->notch_points_y,
                     al_g_calib_results);
-    debug_print("Calibrated!\n");
+    al_debug_print("Calibrated!\n");
     al_g_calib_results->calibrated = true;
-    /*debug_print("X coeffs: %f %f %f %f, Y coeffs: %f %f %f %f\n",
+    /*al_debug_print("X coeffs: %f %f %f %f, Y coeffs: %f %f %f %f\n",
            _settings.calib_results.fit_coeffs_x[0],
            _settings.calib_results.fit_coeffs_x[1],
            _settings.calib_results.fit_coeffs_x[2],
@@ -165,14 +165,14 @@ void analoglib_cal_advance(analog_data_t *in) {
 
     raw_cal_points_x[_cal_step - 1] = in->ax1;
     raw_cal_points_y[_cal_step - 1] = in->ax2;
-    debug_print("Raw X value collected: %f\n\rRaw Y value collected: %f\n\r",
+    al_debug_print("Raw X value collected: %f\n\rRaw Y value collected: %f\n\r",
                 in->ax1, in->ax2);
     _cal_step++;
 
     if (_cal_step > CALIBRATION_NUM_STEPS) {
         calibration_finish();
     } else {
-        debug_print("Calibration Step [%d/%d]\n\r", _cal_step,
+        al_debug_print("Calibration Step [%d/%d]\n\r", _cal_step,
                     CALIBRATION_NUM_STEPS);
     }
 }
@@ -183,7 +183,7 @@ void analoglib_cal_undo(void) {
     if (_cal_step > 1) {
         _cal_step--;
     }
-    debug_print("Calibration Step [%d/%d]\n", _cal_step, CALIBRATION_NUM_STEPS);
+    al_debug_print("Calibration Step [%d/%d]\n", _cal_step, CALIBRATION_NUM_STEPS);
 }
 
 

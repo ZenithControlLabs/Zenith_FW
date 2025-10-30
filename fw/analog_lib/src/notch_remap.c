@@ -99,7 +99,7 @@ void notch_remap(const ax_t x_in, const ax_t y_in, ax_t *x_out, ax_t *y_out,
     // uint32_t thing = time_us_32();
     notch_snap(x_in, y_in, &x_in_adj, &y_in_adj, calib_results, stick_config,
                region, angle);
-    // debug_print("time: %d\n", time_us_32() - thing);
+    // al_debug_print("time: %d\n", time_us_32() - thing);
 
 
 
@@ -143,14 +143,14 @@ void print_mtx(const float matrix[3][3]) {
     int i, j, nrow, ncol;
     nrow = 3;
     ncol = 3;
-    debug_print("\n");
+    al_debug_print("\n");
     for (i = 0; i < nrow; i++) {
         for (j = 0; j < ncol; j++) {
-            debug_print("%.6f, ", matrix[i][j]); // print 6 decimal places
+            al_debug_print("%.6f, ", matrix[i][j]); // print 6 decimal places
         }
-        debug_print("\n");
+        al_debug_print("\n");
     }
-    debug_print("\n");
+    al_debug_print("\n");
 }
 
 void notch_calibrate(const ax_t in_points_x[], const ax_t in_points_y[],
@@ -166,7 +166,7 @@ void notch_calibrate(const ax_t in_points_x[], const ax_t in_points_y[],
 
     // Loop through every region
     for (int cur = 0; cur < NUM_NOTCHES; cur++) {
-        // debug_print("calibration region %d\n", i);
+        // al_debug_print("calibration region %d\n", i);
 
         float pointsIn[3][3];
         float pointsOut[3][3];
@@ -199,7 +199,7 @@ void notch_calibrate(const ax_t in_points_x[], const ax_t in_points_y[],
         float A[3][3];
         matrix_matrix_mult(pointsOut, temp, A);
 
-        // debug_print("The transform matrix is:\n");
+        // al_debug_print("The transform matrix is:\n");
         // print_mtx(A);
 
         // Because we have assumed the two point regions to share 0 as the
@@ -226,7 +226,7 @@ void notch_calibrate(const ax_t in_points_x[], const ax_t in_points_y[],
             calib_results->boundary_angles[0]) {
             calib_results->boundary_angles[cur] += M_PI * 2;
         }
-        debug_print("Boundary angle for region %d: %d\n\r", cur,
+        al_debug_print("Boundary angle for region %d: %d\n\r", cur,
                     (uint32_t)(calib_results->boundary_angles[cur] * (180.)/M_PI));
     }
 }

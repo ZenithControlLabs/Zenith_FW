@@ -33,7 +33,7 @@ void linearize_cal(const ax_t cleaned_points_x[], const ax_t cleaned_points_y[],
     fit_points_y[4] = (double)in_y[3];                   // up
 
     for (int i = 0; i < 5; i++) {
-        debug_print("Fit point %d; (x,y) = (%f, %f)\n", i, fit_points_x[i],
+        al_debug_print("Fit point %d; (x,y) = (%f, %f)\n", i, fit_points_x[i],
                     fit_points_y[i]);
     }
 
@@ -77,7 +77,7 @@ void linearize_cal(const ax_t cleaned_points_x[], const ax_t cleaned_points_y[],
         out_y[i - 1] = linearize(in_y[i], calib_results->fit_coeffs_y);
     }
 
-    debug_print("Center point (confirmation): (x,y) = (%f,%f)\n",
+    al_debug_print("Center point (confirmation): (x,y) = (%f,%f)\n",
                 linearize(in_x[0], calib_results->fit_coeffs_x),
                 linearize(in_y[0], calib_results->fit_coeffs_y));
 }

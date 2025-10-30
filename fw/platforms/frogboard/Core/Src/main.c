@@ -51,7 +51,9 @@ typedef struct {
 /* USER CODE BEGIN PD */
 #define TIMER_LEN ((1 << 24) - 1)
 #define POLL_RATE_HZ 2048
+
 //#define BENCHMARK_SPEED
+#define OUTPUT_CAL
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -71,6 +73,7 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 volatile int g_poll_rdy = 1;
+volatile int g_poll_rdy_chk_ignore = 0;
 volatile int g_sleeping = 0;
 uint16_t g_adc_res[2];
 /* USER CODE END PV */
@@ -81,10 +84,10 @@ static void MX_GPIO_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_DAC1_Init(void);
 static void MX_USART2_UART_Init(void);
-static void MX_USART1_UART_Init(void);
 static void MX_LPTIM1_Init(void);
+static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
-#define PRINTF2UART2 int __io_putchar(int data)
+#define PRINTF2UART1 int __io_putchar(int data)
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -162,35 +165,37 @@ void speed_benchmark() {
 }
 #endif
 
-static inline void main_loop_body(bool settings_mode) {
+static inline void main_loop_body(bool *settings_mode) {
   static int cnt = 0;
   analog_data_t in;
   analog_data_t out;
-    // Read ADC
-    adc_read(&hadc1, g_adc_res, false);
+  // Read ADC
+  intf_adc_in(g_adc_res);
 
-    // In Phobri stickboard emulation mode? Send out the raw ADC reading
-    if (!intf_is_mode_analog()) {
-      intf_out(g_adc_res[CHAN_X], g_adc_res[CHAN_Y]);
-      return;
-    }
+  // In Phobri stickboard emulation mode? Send out the raw ADC reading
+  if (!intf_is_mode_analog()) {
+    intf_out(g_adc_res[CHAN_X], g_adc_res[CHAN_Y]);
+    return;
+  }
 
-    in.ax1 = UINT_N_TO_AX(g_adc_res[CHAN_X], 12);
-    in.ax2 = UINT_N_TO_AX(g_adc_res[CHAN_Y], 12);
+  in.ax1 = UINT_N_TO_AX(g_adc_res[CHAN_X], 12);
+  in.ax2 = UINT_N_TO_AX(g_adc_res[CHAN_Y], 12);
 
-    // Process, either normal or we are in settings menu
-    if (settings_mode) {
-      bool btn_press = HAL_GPIO_ReadPin(STICK_BTN_GPIO_Port, STICK_BTN_Pin);
-      menu_process(&in, &out, btn_press);
-    } else {
-      analoglib_process(&in, &out, false);
-    } 
+  analoglib_process(&in, &out, false);
 
-    intf_out(AX_TO_INT16(out.ax1), AX_TO_INT16(out.ax2)); 
-    if ((cnt & 255) == 0) {
-      HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
-    }
-    cnt++; 
+  // If we are in settings mode, the calibrated output is treated as an input 
+  // to control the settings menu
+  if (*settings_mode) {
+    // long running process; ignore sleep check
+    g_poll_rdy_chk_ignore = true;   
+    *settings_mode = menu_process(&in, &out);
+  }
+
+  intf_out(AX_TO_INT16(out.ax1), AX_TO_INT16(out.ax2)); 
+  if ((cnt & 255) == 0 && !*settings_mode) {
+    HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
+  }
+  cnt++; 
 }
 
 /* USER CODE END 0 */
@@ -228,26 +233,30 @@ int main(void)
   MX_GPIO_Init();
   MX_ADC1_Init();
   MX_USART2_UART_Init();
-  MX_USART1_UART_Init();
   MX_LPTIM1_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   // Initialize output interface - do the I2C test to see if we need to be in Phobri mode or not
-  intf_init(&hdac1);
+  intf_init(&hadc1, &hdac1);
 
   // First (try to) load settings from flash. Interface will need this for output calibration when running in analog mode.
   bool needs_factory_init = intf_is_mode_analog() && settings_load();
 
   // Run any special benchmark modes if specified
-#ifdef BENCHMARK_SPEED
+#if defined(BENCHMARK_SPEED)
   speed_benchmark();
   return 0;
-  #elif BENCHMARK_POWER
+#elif defined(BENCHMARK_POWER)
   // TODO
   return 0;
-  #endif
-
+#elif defined(OUTPUT_CAL)
+  
+#endif
   // Stick procesing library should use our settings
-  analoglib_init(&g_settings.calib_results, &g_settings.stick_config, 1/2000.f);
+  analoglib_init(
+    &g_settings.calib_results,
+    &g_settings.stick_config,
+    1/((float)POLL_RATE_HZ));
   
   // Run the factory calibration process if settings load says this is the first time
   if (needs_factory_init) {
@@ -260,18 +269,23 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  bool settings_mode = needs_factory_init || HAL_GPIO_ReadPin(STICK_BTN_GPIO_Port, STICK_BTN_Pin);
+  bool settings_mode = needs_factory_init || !HAL_GPIO_ReadPin(STICK_BTN_GPIO_Port, STICK_BTN_Pin);
+  if (settings_mode) {
+    debug_print("Enter settings mode...\n\r");
+  }
   
   LPTIM1->IER = LPTIM_IER_ARRMIE;
   HAL_LPTIM_Counter_Start(&hlptim1, 32768 / POLL_RATE_HZ);
   while (1) {
-    if (!g_poll_rdy) {
+    if (!g_poll_rdy && !g_poll_rdy_chk_ignore) {
       debug_print("Sanity check failed! Is the main loop taking too long..?\n");
       Error_Handler();
     }
-    main_loop_body(false);
+    g_poll_rdy_chk_ignore = 0;
+    main_loop_body(&settings_mode);
     g_poll_rdy = 0;
 
+    if (settings_mode) continue; // don't sleep in settings mode. TODO: it should still be waiting though
     HAL_ADC_DeInit(&hadc1);
     LL_ADC_DisableInternalRegulator(hadc1.Instance);
     HAL_SuspendTick();
@@ -614,8 +628,8 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-PRINTF2UART2 {
-  HAL_UART_Transmit(&huart2, (uint8_t *)&data, 1, 0xFFFF);
+PRINTF2UART1 {
+  HAL_UART_Transmit(&huart1, (uint8_t *)&data, 1, 0xFFFF);
   return data;
 }
 /* USER CODE END 4 */

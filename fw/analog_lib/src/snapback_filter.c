@@ -4,7 +4,7 @@
 
 float g_alpha = 0.f;
 
-inline float lpf(float prev, float meas) {
+inline __attribute__((always_inline)) float lpf(float prev, float meas) {
     return prev + g_alpha * (meas - prev);
 }
 

@@ -2,9 +2,9 @@
 #define STICK_H
 
 #ifdef DEBUG
-#define debug_print(fmt, args...) printf(fmt, ##args)
+#define al_debug_print(fmt, args...) printf(fmt, ##args)
 #else
-#define debug_print(fmt, args...)
+#define al_debug_print(fmt, args...)
 #endif
 
 #include "stick_types.h"

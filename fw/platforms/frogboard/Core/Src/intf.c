@@ -1,12 +1,14 @@
 #include "intf.h"
 #include "settings.h"
+#include "stm32l4xx_hal_adc.h"
 
 DAC_HandleTypeDef *g_intf_hdac = NULL;
+ADC_HandleTypeDef *g_intf_hadc = NULL;
 
 extern void Error_Handler(void);
 
-void adc_read(ADC_HandleTypeDef *hadc, uint16_t *adc_res, bool apply_pol) {
-  HAL_StatusTypeDef status = HAL_ADC_Start(hadc);
+void intf_adc_in(uint16_t *adc_res) {
+  HAL_StatusTypeDef status = HAL_ADC_Start(g_intf_hadc);
   if (status != HAL_OK) {
     Error_Handler();
   }
@@ -16,25 +18,23 @@ void adc_read(ADC_HandleTypeDef *hadc, uint16_t *adc_res, bool apply_pol) {
     if (cnt > CHAN_END) {
       Error_Handler();
     }
-    while ((hadc->Instance->ISR & ADC_ISR_EOC) == 0) { 
+    while ((g_intf_hadc->Instance->ISR & ADC_ISR_EOC) == 0) { 
       asm volatile ("");
     }
-    done = hadc->Instance->ISR & ADC_ISR_EOS;
-    adc_res[cnt++] = hadc->Instance->DR;
-  }
-  if (apply_pol) {
-    for (int chan = 0; chan < CHAN_END; chan++) {
-      adc_res[chan] = g_settings.polarity[chan] ? adc_res[chan] : (((1<<16)-1) - adc_res[chan]);
-    }
+    done = g_intf_hadc->Instance->ISR & ADC_ISR_EOS;
+    adc_res[cnt++] = g_intf_hadc->Instance->DR;
   }
 }
 
 /**
-  * @brief  Initialize the output interface subsystem. Perform the I2C probe, set mode accordingly.
+  * @brief  Initialize the input subsystem with the appopriate ADC handle, as well as the
+            output interface subsystem. Perform the I2C probe, set mode accordingly.
+  * @param  hadc: The ADC handle to read from..
   * @param  hdac: The DAC handle to program in analog mode.
   * @retval None
   */
-void intf_init(DAC_HandleTypeDef *hdac) {
+void intf_init(ADC_HandleTypeDef *hadc, DAC_HandleTypeDef *hdac) {
+    g_intf_hadc = hadc;
     g_intf_hdac = hdac;
 }
 
@@ -48,6 +48,7 @@ void intf_init(DAC_HandleTypeDef *hdac) {
   */
 void intf_out(int16_t x, int16_t y) {
   // y flipped cuz it is  ¯\_(ツ)_/¯ 
+  // todo use g_intf_hdac instead (changed it to this directly while debugging)
   DAC1->DHR12RD = (((x >> 4) + 2048) << 16) | (((-y) >> 4) + 2048);
 }
 
@@ -61,10 +62,8 @@ void intf_out(int16_t x, int16_t y) {
   * @retval None
   */
 void intf_out_cal(ax_t x, ax_t y) {
-  dac_calib_t *dc = &g_settings.dac_calib;
-  ax_t xo = dc->x_m * x + dc->x_b;
-  ax_t yo = dc->y_m * y + dc->y_b;
-  intf_out(AX_TO_INT16(xo), AX_TO_INT16(yo));
+  // STUB 
+  intf_out(0,0);
 }
 
 /**

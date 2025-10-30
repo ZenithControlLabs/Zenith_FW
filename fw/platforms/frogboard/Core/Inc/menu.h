@@ -5,9 +5,20 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "stm32l4xx_hal.h"
+#include "main.h"
 
+typedef enum {
+    DIR_NEUTRAL = 0b000,
+    DIR_UNKNOWN = 0b001,
+    DIR_UP      = 0b100,
+    DIR_DOWN    = 0b101,
+    DIR_LEFT    = 0b110,
+    DIR_RIGHT   = 0b111
+} stick_menu_direction_t;
+
+bool get_menu_btn_press();
+stick_menu_direction_t stick_val_to_menu_dir(analog_data_t *in);
 void factory_init(ADC_HandleTypeDef *hadc);
-void menu_process(analog_data_t *in, analog_data_t *out, bool btn_press);
+bool menu_process(analog_data_t *raw, analog_data_t *cal);
 
 #endif // __MENU_H

@@ -6,6 +6,9 @@
 #include <string.h>
 
 settings_t g_settings;
+// We enforce the (possibly overly conservative) policy that the controller always boots into calibration mode whenever you have flashed it,
+// otherwise you may not be able to use the menu options (we don't know what kind of signal the uncalibrated controller has).
+// So if something bad happens, we want to leave re-flashing as a reliable escape hatch. Initializing g_magic to != MAGIC upon flashing accomplishes this.
 volatile const uint64_t g_magic __attribute__((section(".text"))) = 0xFFFFFFFFFFFFFFFF;
 
 void settings_reset_to_factory() {
@@ -31,10 +34,9 @@ void settings_reset_to_factory() {
                 INT_N_TO_AX(-85, 8), INT_N_TO_AX(-70, 8)
             },
             .angle_deadzones = {0},
-            .mag_threshold = .8 // 80% into the notch by default
+            .mag_threshold = .8, // 80% into the notch by default
+            .cutoff_hz = 450.f,
         },
-        .dac_calib = {0},
-        .polarity = {0}
     };
     g_settings = set;
 }
