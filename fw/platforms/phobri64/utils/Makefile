@@ -1,2 +1,2 @@
-datacollect: datacollect.c
-	gcc -o $@ $^ -lhidapi-hidraw
+datacollect: datacollect_new.c
+	gcc -o $@ $^ -lhidapi
