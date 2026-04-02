@@ -68,8 +68,7 @@ DAC_HandleTypeDef hdac1;
 
 LPTIM_HandleTypeDef hlptim1;
 
-UART_HandleTypeDef huart1;
-UART_HandleTypeDef huart2;
+PCD_HandleTypeDef hpcd_USB_FS;
 
 /* USER CODE BEGIN PV */
 volatile int g_poll_rdy = 1;
@@ -80,14 +79,14 @@ uint16_t g_adc_res[2];
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+void PeriphCommonClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_DAC1_Init(void);
-static void MX_USART2_UART_Init(void);
 static void MX_LPTIM1_Init(void);
-static void MX_USART1_UART_Init(void);
+static void MX_USB_PCD_Init(void);
 /* USER CODE BEGIN PFP */
-#define PRINTF2UART1 int __io_putchar(int data)
+// #define PRINTF2UART1 int __io_putchar(int data)
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -192,9 +191,9 @@ static inline void main_loop_body(bool *settings_mode) {
   }
 
   intf_out(AX_TO_INT16(out.ax1), AX_TO_INT16(out.ax2)); 
-  if ((cnt & 255) == 0 && !*settings_mode) {
-    HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
-  }
+  //if ((cnt & 255) == 0 && !*settings_mode) {
+  //  HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
+  //}
   cnt++; 
 }
 
@@ -225,6 +224,9 @@ int main(void)
   /* Configure the system clock */
   SystemClock_Config();
 
+  /* Configure the peripherals common clocks */
+  PeriphCommonClock_Config();
+
   /* USER CODE BEGIN SysInit */
 
   /* USER CODE END SysInit */
@@ -232,12 +234,12 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_ADC1_Init();
-  MX_USART2_UART_Init();
   MX_LPTIM1_Init();
-  MX_USART1_UART_Init();
+  MX_USB_PCD_Init();
   /* USER CODE BEGIN 2 */
   // Initialize output interface - do the I2C test to see if we need to be in Phobri mode or not
   intf_init(&hadc1, &hdac1);
+  HAL_GPIO_WritePin(A_SEL_GPIO_Port, A_SEL_Pin, true);
 
   // First (try to) load settings from flash. Interface will need this for output calibration when running in analog mode.
   bool needs_factory_init = intf_is_mode_analog() && settings_load();
@@ -362,6 +364,32 @@ void SystemClock_Config(void)
   /** Enable MSI Auto calibration
   */
   HAL_RCCEx_EnableMSIPLLMode();
+}
+
+/**
+  * @brief Peripherals Common Clock Configuration
+  * @retval None
+  */
+void PeriphCommonClock_Config(void)
+{
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
+
+  /** Initializes the peripherals clock
+  */
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USB|RCC_PERIPHCLK_ADC;
+  PeriphClkInit.AdcClockSelection = RCC_ADCCLKSOURCE_PLLSAI1;
+  PeriphClkInit.UsbClockSelection = RCC_USBCLKSOURCE_PLLSAI1;
+  PeriphClkInit.PLLSAI1.PLLSAI1Source = RCC_PLLSOURCE_MSI;
+  PeriphClkInit.PLLSAI1.PLLSAI1M = 1;
+  PeriphClkInit.PLLSAI1.PLLSAI1N = 24;
+  PeriphClkInit.PLLSAI1.PLLSAI1P = RCC_PLLP_DIV7;
+  PeriphClkInit.PLLSAI1.PLLSAI1Q = RCC_PLLQ_DIV2;
+  PeriphClkInit.PLLSAI1.PLLSAI1R = RCC_PLLR_DIV2;
+  PeriphClkInit.PLLSAI1.PLLSAI1ClockOut = RCC_PLLSAI1_48M2CLK|RCC_PLLSAI1_ADC1CLK;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+  {
+    Error_Handler();
+  }
 }
 
 /**
@@ -520,72 +548,35 @@ static void MX_LPTIM1_Init(void)
 }
 
 /**
-  * @brief USART1 Initialization Function
+  * @brief USB Initialization Function
   * @param None
   * @retval None
   */
-static void MX_USART1_UART_Init(void)
+static void MX_USB_PCD_Init(void)
 {
 
-  /* USER CODE BEGIN USART1_Init 0 */
+  /* USER CODE BEGIN USB_Init 0 */
 
-  /* USER CODE END USART1_Init 0 */
+  /* USER CODE END USB_Init 0 */
 
-  /* USER CODE BEGIN USART1_Init 1 */
+  /* USER CODE BEGIN USB_Init 1 */
 
-  /* USER CODE END USART1_Init 1 */
-  huart1.Instance = USART1;
-  huart1.Init.BaudRate = 115200;
-  huart1.Init.WordLength = UART_WORDLENGTH_8B;
-  huart1.Init.StopBits = UART_STOPBITS_1;
-  huart1.Init.Parity = UART_PARITY_NONE;
-  huart1.Init.Mode = UART_MODE_TX_RX;
-  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
-  huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-  if (HAL_UART_Init(&huart1) != HAL_OK)
+  /* USER CODE END USB_Init 1 */
+  hpcd_USB_FS.Instance = USB;
+  hpcd_USB_FS.Init.dev_endpoints = 8;
+  hpcd_USB_FS.Init.speed = PCD_SPEED_FULL;
+  hpcd_USB_FS.Init.phy_itface = PCD_PHY_EMBEDDED;
+  hpcd_USB_FS.Init.Sof_enable = DISABLE;
+  hpcd_USB_FS.Init.low_power_enable = DISABLE;
+  hpcd_USB_FS.Init.lpm_enable = DISABLE;
+  hpcd_USB_FS.Init.battery_charging_enable = DISABLE;
+  if (HAL_PCD_Init(&hpcd_USB_FS) != HAL_OK)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN USART1_Init 2 */
+  /* USER CODE BEGIN USB_Init 2 */
 
-  /* USER CODE END USART1_Init 2 */
-
-}
-
-/**
-  * @brief USART2 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_USART2_UART_Init(void)
-{
-
-  /* USER CODE BEGIN USART2_Init 0 */
-
-  /* USER CODE END USART2_Init 0 */
-
-  /* USER CODE BEGIN USART2_Init 1 */
-
-  /* USER CODE END USART2_Init 1 */
-  huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
-  huart2.Init.WordLength = UART_WORDLENGTH_8B;
-  huart2.Init.StopBits = UART_STOPBITS_1;
-  huart2.Init.Parity = UART_PARITY_NONE;
-  huart2.Init.Mode = UART_MODE_TX_RX;
-  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
-  huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-  if (HAL_UART_Init(&huart2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN USART2_Init 2 */
-
-  /* USER CODE END USART2_Init 2 */
+  /* USER CODE END USB_Init 2 */
 
 }
 
@@ -604,23 +595,22 @@ static void MX_GPIO_Init(void)
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(A_SEL_GPIO_Port, A_SEL_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : A_SEL_Pin */
+  GPIO_InitStruct.Pin = A_SEL_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(A_SEL_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : STICK_BTN_Pin */
   GPIO_InitStruct.Pin = STICK_BTN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(STICK_BTN_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : LD3_Pin */
-  GPIO_InitStruct.Pin = LD3_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LD3_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(STICK_BTN_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
@@ -628,10 +618,10 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-PRINTF2UART1 {
-  HAL_UART_Transmit(&huart1, (uint8_t *)&data, 1, 0xFFFF);
-  return data;
-}
+//PRINTF2UART1 {
+//  HAL_UART_Transmit(&huart1, (uint8_t *)&data, 1, 0xFFFF);
+//  return data;
+//}
 /* USER CODE END 4 */
 
 /**

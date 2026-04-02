@@ -66,6 +66,50 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define MCO_Pin GPIO_PIN_0
 #define MCO_GPIO_Port GPIOA
+#define AX_OUT_Pin GPIO_PIN_4
+#define AX_OUT_GPIO_Port GPIOA
+#define AY_OUT_Pin GPIO_PIN_5
+#define AY_OUT_GPIO_Port GPIOA
+#define AX_IN_Pin GPIO_PIN_6
+#define AX_IN_GPIO_Port GPIOA
+#define AY_IN_Pin GPIO_PIN_7
+#define AY_IN_GPIO_Port GPIOA
+#define A_SEL_Pin GPIO_PIN_8
+#define A_SEL_GPIO_Port GPIOA
+#define STICK_BTN_Pin GPIO_PIN_9
+#define STICK_BTN_GPIO_Port GPIOA
+#define SWDIO_Pin GPIO_PIN_13
+#define SWDIO_GPIO_Port GPIOA
+#define SWCLK_Pin GPIO_PIN_14
+#define SWCLK_GPIO_Port GPIOA
+
+/* USER CODE BEGIN Private defines */
+#ifdef FROGBOARD_NUCLEO_DEVBOARD
+#undef MCO_Pin
+#undef MCO_GPIO_Port
+#undef VCP_TX_Pin
+#undef VCP_TX_GPIO_Port
+#undef AX_OUT_Pin
+#undef AX_OUT_GPIO_Port
+#undef AY_OUT_Pin
+#undef AY_OUT_GPIO_Port
+#undef AX_IN_Pin
+#undef AX_IN_GPIO_Port
+#undef AY_IN_Pin
+#undef AY_IN_GPIO_Port
+#undef STICK_BTN_Pin
+#undef STICK_BTN_GPIO_Port
+#undef SWDIO_Pin
+#undef SWDIO_GPIO_Port
+#undef SWCLK_Pin
+#undef SWCLK_GPIO_Port
+#undef VCP_RX_Pin
+#undef VCP_RX_GPIO_Port
+#undef LD3_Pin
+
+#define LD3_GPIO_Port GPIOB
+#define MCO_Pin GPIO_PIN_0
+#define MCO_GPIO_Port GPIOA
 #define VCP_TX_Pin GPIO_PIN_2
 #define VCP_TX_GPIO_Port GPIOA
 #define AX_OUT_Pin GPIO_PIN_4
@@ -86,9 +130,7 @@ void Error_Handler(void);
 #define VCP_RX_GPIO_Port GPIOA
 #define LD3_Pin GPIO_PIN_3
 #define LD3_GPIO_Port GPIOB
-
-/* USER CODE BEGIN Private defines */
-
+#endif
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

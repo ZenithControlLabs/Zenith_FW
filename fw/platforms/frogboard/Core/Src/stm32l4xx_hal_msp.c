@@ -86,29 +86,11 @@ void HAL_MspInit(void)
 void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
-  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
   if(hadc->Instance==ADC1)
   {
     /* USER CODE BEGIN ADC1_MspInit 0 */
 
     /* USER CODE END ADC1_MspInit 0 */
-
-  /** Initializes the peripherals clock
-  */
-    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC;
-    PeriphClkInit.AdcClockSelection = RCC_ADCCLKSOURCE_PLLSAI1;
-    PeriphClkInit.PLLSAI1.PLLSAI1Source = RCC_PLLSOURCE_MSI;
-    PeriphClkInit.PLLSAI1.PLLSAI1M = 1;
-    PeriphClkInit.PLLSAI1.PLLSAI1N = 16;
-    PeriphClkInit.PLLSAI1.PLLSAI1P = RCC_PLLP_DIV7;
-    PeriphClkInit.PLLSAI1.PLLSAI1Q = RCC_PLLQ_DIV2;
-    PeriphClkInit.PLLSAI1.PLLSAI1R = RCC_PLLR_DIV2;
-    PeriphClkInit.PLLSAI1.PLLSAI1ClockOut = RCC_PLLSAI1_ADC1CLK;
-    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
-    {
-      Error_Handler();
-    }
-
     /* Peripheral clock enable */
     __HAL_RCC_ADC_CLK_ENABLE();
 
@@ -286,146 +268,58 @@ void HAL_LPTIM_MspDeInit(LPTIM_HandleTypeDef* hlptim)
 }
 
 /**
-  * @brief UART MSP Initialization
+  * @brief PCD MSP Initialization
   * This function configures the hardware resources used in this example
-  * @param huart: UART handle pointer
+  * @param hpcd: PCD handle pointer
   * @retval None
   */
-void HAL_UART_MspInit(UART_HandleTypeDef* huart)
+void HAL_PCD_MspInit(PCD_HandleTypeDef* hpcd)
 {
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
-  if(huart->Instance==USART1)
+  if(hpcd->Instance==USB)
   {
-    /* USER CODE BEGIN USART1_MspInit 0 */
+    /* USER CODE BEGIN USB_MspInit 0 */
 
-    /* USER CODE END USART1_MspInit 0 */
-
-  /** Initializes the peripherals clock
-  */
-    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1;
-    PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK2;
-    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
-    {
-      Error_Handler();
-    }
-
+    /* USER CODE END USB_MspInit 0 */
     /* Peripheral clock enable */
-    __HAL_RCC_USART1_CLK_ENABLE();
+    __HAL_RCC_USB_CLK_ENABLE();
 
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    __HAL_RCC_GPIOB_CLK_ENABLE();
-    /**USART1 GPIO Configuration
-    PA10     ------> USART1_RX
-    PB6     ------> USART1_TX
-    */
-    GPIO_InitStruct.Pin = GPIO_PIN_10;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF7_USART1;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = GPIO_PIN_6;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF7_USART1;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-    /* USER CODE BEGIN USART1_MspInit 1 */
-
-    /* USER CODE END USART1_MspInit 1 */
-  }
-  else if(huart->Instance==USART2)
-  {
-    /* USER CODE BEGIN USART2_MspInit 0 */
-
-    /* USER CODE END USART2_MspInit 0 */
-
-  /** Initializes the peripherals clock
-  */
-    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART2;
-    PeriphClkInit.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
-    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+    /* Enable VDDUSB */
+    if(__HAL_RCC_PWR_IS_CLK_DISABLED())
     {
-      Error_Handler();
+      __HAL_RCC_PWR_CLK_ENABLE();
+      HAL_PWREx_EnableVddUSB();
+      __HAL_RCC_PWR_CLK_DISABLE();
     }
+    else
+    {
+      HAL_PWREx_EnableVddUSB();
+    }
+    /* USER CODE BEGIN USB_MspInit 1 */
 
-    /* Peripheral clock enable */
-    __HAL_RCC_USART2_CLK_ENABLE();
+    /* USER CODE END USB_MspInit 1 */
 
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    /**USART2 GPIO Configuration
-    PA2     ------> USART2_TX
-    PA15 (JTDI)     ------> USART2_RX
-    */
-    GPIO_InitStruct.Pin = VCP_TX_Pin;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF7_USART2;
-    HAL_GPIO_Init(VCP_TX_GPIO_Port, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = VCP_RX_Pin;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF3_USART2;
-    HAL_GPIO_Init(VCP_RX_GPIO_Port, &GPIO_InitStruct);
-
-    /* USER CODE BEGIN USART2_MspInit 1 */
-
-    /* USER CODE END USART2_MspInit 1 */
   }
 
 }
 
 /**
-  * @brief UART MSP De-Initialization
+  * @brief PCD MSP De-Initialization
   * This function freeze the hardware resources used in this example
-  * @param huart: UART handle pointer
+  * @param hpcd: PCD handle pointer
   * @retval None
   */
-void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
+void HAL_PCD_MspDeInit(PCD_HandleTypeDef* hpcd)
 {
-  if(huart->Instance==USART1)
+  if(hpcd->Instance==USB)
   {
-    /* USER CODE BEGIN USART1_MspDeInit 0 */
+    /* USER CODE BEGIN USB_MspDeInit 0 */
 
-    /* USER CODE END USART1_MspDeInit 0 */
+    /* USER CODE END USB_MspDeInit 0 */
     /* Peripheral clock disable */
-    __HAL_RCC_USART1_CLK_DISABLE();
+    __HAL_RCC_USB_CLK_DISABLE();
+    /* USER CODE BEGIN USB_MspDeInit 1 */
 
-    /**USART1 GPIO Configuration
-    PA10     ------> USART1_RX
-    PB6     ------> USART1_TX
-    */
-    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_10);
-
-    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_6);
-
-    /* USER CODE BEGIN USART1_MspDeInit 1 */
-
-    /* USER CODE END USART1_MspDeInit 1 */
-  }
-  else if(huart->Instance==USART2)
-  {
-    /* USER CODE BEGIN USART2_MspDeInit 0 */
-
-    /* USER CODE END USART2_MspDeInit 0 */
-    /* Peripheral clock disable */
-    __HAL_RCC_USART2_CLK_DISABLE();
-
-    /**USART2 GPIO Configuration
-    PA2     ------> USART2_TX
-    PA15 (JTDI)     ------> USART2_RX
-    */
-    HAL_GPIO_DeInit(GPIOA, VCP_TX_Pin|VCP_RX_Pin);
-
-    /* USER CODE BEGIN USART2_MspDeInit 1 */
-
-    /* USER CODE END USART2_MspDeInit 1 */
+    /* USER CODE END USB_MspDeInit 1 */
   }
 
 }
