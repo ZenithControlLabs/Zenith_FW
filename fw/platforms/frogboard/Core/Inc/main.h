@@ -64,8 +64,8 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define MCO_Pin GPIO_PIN_0
-#define MCO_GPIO_Port GPIOA
+#define LD3_Pin GPIO_PIN_3
+#define LD3_GPIO_Port GPIOA
 #define AX_OUT_Pin GPIO_PIN_4
 #define AX_OUT_GPIO_Port GPIOA
 #define AY_OUT_Pin GPIO_PIN_5

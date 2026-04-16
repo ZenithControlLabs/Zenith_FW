@@ -115,18 +115,18 @@ bool calib_process(analog_data_t *raw, analog_data_t *cal) {
 #endif 
     analoglib_cal_advance(raw);
     step++;
-    //HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
-    //HAL_Delay(100);
-    //HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
+    HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
+    HAL_Delay(100);
+    HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
   }
 
 #ifdef TIMER_BASED_CALIB
   else if (step >= 1 && get_menu_btn_press()) {
     analoglib_cal_undo();
     step--;
-    //HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
-    //HAL_Delay(100);
-    //HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
+    HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
+    HAL_Delay(100);
+    HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
   }
 #endif
 
@@ -199,6 +199,7 @@ void factory_init(ADC_HandleTypeDef *hadc) {
     raw.ax2 = UINT_N_TO_AX(adc_res[CHAN_Y], 12);
     done = calib_process(&raw, &cal);
     intf_out(AX_TO_INT16(cal.ax1), AX_TO_INT16(cal.ax2)); 
+    HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, true);
   }
 
   settings_flush();
