@@ -23,6 +23,7 @@ let controllerState = {
     ay: 0,
     fx: 0.0,
     fy: 0.0,
+    showRaw: false,
 }
 
 let csvData = ["x,y,rx,ry"];
@@ -62,7 +63,8 @@ export function setAy(ay) {
 }
 
 export async function updateDbgReporting() {
-    dbgSpan.style.visibility = dbgCheckbox.checked ? "visible" : "hidden";
+    if (dbgSpan && dbgCheckbox)
+        dbgSpan.style.visibility = dbgCheckbox.checked ? "visible" : "hidden";
 }
 
 export function updateInputDisplay(data) {
@@ -78,7 +80,7 @@ export function updateInputDisplay(data) {
     const fy = IntToFloat32(swap32(ry));
     controllerState.fx = fx;
     controllerState.fy = fy;
-    if (dbgCheckbox.checked)
+    if (dbgCheckbox?.checked)
         dbgSpan.textContent = `raw: x: ${fx.toFixed(4)}; y: ${fy.toFixed(4)}`;
 
     updateCanvas();
@@ -92,6 +94,7 @@ export function updateCanvas() {
     ctx.scale(inputDisplayScale, inputDisplayScale);
 
     ctx.lineWidth = 3;
+    ctx.strokeStyle = "black";
     ctx.fillStyle ="white";
 
     // asumes canvas.width = canvas.height
@@ -117,12 +120,12 @@ export function updateCanvas() {
     ctx.fill();
     ctx.stroke();
 
-    if (dbgCheckbox.checked) {
-        ctx.fillStyle = "green";
+    if (controllerState.showRaw) {
+        ctx.fillStyle = "#00a83b";
         ctx.beginPath();
         const fx = controllerState.fx * canvas.width/2;
         const fy = -controllerState.fy * canvas.width/2;
-        ctx.arc(fx, fy, stickCircRad/1.5, 0, 2*Math.PI);
+        ctx.arc(fx, fy, stickCircRad/1.25, 0, 2*Math.PI);
         ctx.closePath();
         ctx.fill();
     }
@@ -136,4 +139,30 @@ export function updateCanvas() {
     ctx.closePath();
     ctx.stroke();
     ctx.restore();
+}
+
+updateCanvas();
+
+/* Corrected N64-format state returned by the dedicated vendor command. */
+export function updateInputDisplayRaw(data) {
+    if (data.byteLength < 16) return;
+    const rawX = Math.max(-1, Math.min(1, data.getFloat32(8, true)));
+    const rawY = Math.max(-1, Math.min(1, data.getFloat32(12, true)));
+
+    controllerState.fx = rawX;
+    controllerState.fy = rawY;
+    controllerState.showRaw = true;
+
+    if (calStep == -1) {
+        setAx(data.getInt8(3));
+        setAy(data.getInt8(4));
+    }
+
+    if (dbgSpan) {
+        if (calStep != -1)
+            dbgSpan.textContent = "Green: raw output · ring: calibration target";
+        else
+            dbgSpan.textContent = "Green: raw output · ring: calibrated output";
+    }
+    updateCanvas();
 }

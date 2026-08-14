@@ -56,4 +56,19 @@
     { 0 }
 #endif
 
+/* Values are one-based destination bit indices; 0 keeps the source index. */
+#ifndef ZTH_SWITCH_REMAP_DEFAULT
+#define ZTH_SWITCH_REMAP_DEFAULT                                               \
+    { 4, 3, 2, 1, 23, 7, 10, 23, 7, 24, 17, 20, 19, 18, 8, 0xFF, 0xFF,      \
+      0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,      \
+      0xFF, 0xFF, 0xFF, 0xFF }
+#endif
+
+#ifndef ZTH_XINPUT_REMAP_DEFAULT
+#define ZTH_XINPUT_REMAP_DEFAULT                                               \
+    { 13, 14, 16, 15, 9, 10, 5, 9, 10, 17, 2, 3, 4, 1, 18, 0xFF, 0xFF,       \
+      0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,      \
+      0xFF, 0xFF, 0xFF, 0xFF }
+#endif
+
 #endif // ZENITH_CFG_DEF_H

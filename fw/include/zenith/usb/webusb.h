@@ -28,6 +28,10 @@ typedef enum {
     WEBUSB_CMD_LPF_CUTOFF_SET = 0x08,
     WEBUSB_CMD_LPF_CUTOFF_GET = 0xA8,
 
+    WEBUSB_CMD_COMMS_MODE_SET = 0x09,
+    WEBUSB_CMD_COMMS_MODE_GET = 0xA9,
+    WEBUSB_CMD_RAW_N64_GET = 0xAA,
+
     WEBUSB_CMD_UPDATE_FW = 0xF1,
     WEBUSB_CMD_COMMIT_SETTINGS = 0xF2,
     WEBUSB_CMD_RESET_SETTINGS = 0xF3,
@@ -52,6 +56,7 @@ typedef enum {
 // defining for access to stick data through WebUSB
 extern analog_data_t _analog_data;
 extern analog_data_t _analog_data_processed;
+extern btn_data_t _buttons;
 
 // The WebUSB interface will send output reports separately over the USB.
 // But it doesn't need to be sending that when the controller is just being used

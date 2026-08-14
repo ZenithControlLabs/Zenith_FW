@@ -1,115 +1,108 @@
 #include "zenith/includes.h"
 
-// clang-format off
-
-const tusb_desc_device_t DEVICE_DESCRIPTOR = {
-    .bLength = 18,
+/*
+ * The default USB identity and HID layout mirror a wired Nintendo Switch Pro
+ * Controller.  The vendor interface is a separate WinUSB/WebUSB function and
+ * is intentionally absent from the XInput configuration.
+ */
+const tusb_desc_device_t SWITCH_DEVICE_DESCRIPTOR = {
+    .bLength = sizeof(tusb_desc_device_t),
     .bDescriptorType = TUSB_DESC_DEVICE,
-    .bcdUSB = 0x0210, // Changed from 0x0200 to 2.1 for BOS & WebUSB
+    .bcdUSB = 0x0210,
     .bDeviceClass = 0x00,
     .bDeviceSubClass = 0x00,
     .bDeviceProtocol = 0x00,
-
     .bMaxPacketSize0 = 64,
-    .idVendor = ZTH_VID,
-    .idProduct = ZTH_PID,
-
-    .bcdDevice = 0x0100,
+    .idVendor = 0x057E,
+    .idProduct = 0x2009,
+    .bcdDevice = 0x0210,
     .iManufacturer = 0x01,
     .iProduct = 0x02,
     .iSerialNumber = 0x03,
-    .bNumConfigurations = 0x01
+    .bNumConfigurations = 0x01,
 };
 
-#define REPORT_ID_GAMEPAD 4
-
-// Generic Gamepad HID descriptor
-const uint8_t HID_REPORT_DESCRIPTOR [] = {
-   HID_USAGE_PAGE ( HID_USAGE_PAGE_DESKTOP     )                 ,\
-    HID_USAGE      ( HID_USAGE_DESKTOP_GAMEPAD  )                 ,\
-    HID_COLLECTION ( HID_COLLECTION_APPLICATION )                 ,\
-        /* Report ID if any */\
-        HID_REPORT_ID(REPORT_ID_GAMEPAD)\
-        /* 8 bit X, Y, Z, Rz, Rx, Ry (min -127, max 127 ) */ \
-        HID_USAGE_PAGE     ( HID_USAGE_PAGE_DESKTOP                 ) ,\
-        HID_USAGE          ( HID_USAGE_DESKTOP_X                    ) ,\
-        HID_USAGE          ( HID_USAGE_DESKTOP_Y                    ) ,\
-        HID_USAGE          ( HID_USAGE_DESKTOP_Z                    ) ,\
-        HID_USAGE          ( HID_USAGE_DESKTOP_RZ                    ) ,\
-        HID_USAGE          ( HID_USAGE_DESKTOP_RX                   ) ,\
-        HID_USAGE          ( HID_USAGE_DESKTOP_RY                   ) ,\
-        HID_LOGICAL_MIN    ( 0x81                                   ) ,\
-        HID_LOGICAL_MAX    ( 0x7f                                   ) ,\
-        HID_REPORT_COUNT   ( 6                                      ) ,\
-        HID_REPORT_SIZE    ( 8                                      ) ,\
-        HID_INPUT          ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ) ,\
-        /* 8 bit DPad/Hat Button Map  */ \
-        HID_USAGE_PAGE     ( HID_USAGE_PAGE_DESKTOP                 ) ,\
-        HID_USAGE          ( HID_USAGE_DESKTOP_HAT_SWITCH           ) ,\
-        HID_LOGICAL_MIN    ( 1                                      ) ,\
-        HID_LOGICAL_MAX    ( 8                                      ) ,\
-        HID_PHYSICAL_MIN   ( 0                                      ) ,\
-        HID_PHYSICAL_MAX_N ( 315, 2                                 ) ,\
-        HID_REPORT_COUNT   ( 1                                      ) ,\
-        HID_REPORT_SIZE    ( 8                                      ) ,\
-        HID_INPUT          ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ) ,\
-        /* 32 bit Button Map */ \
-        HID_USAGE_PAGE     ( HID_USAGE_PAGE_BUTTON                  ) ,\
-        HID_USAGE_MIN      ( 1                                      ) ,\
-        HID_USAGE_MAX      ( 32                                     ) ,\
-        HID_LOGICAL_MIN    ( 0                                      ) ,\
-        HID_LOGICAL_MAX    ( 1                                      ) ,\
-        HID_REPORT_COUNT   ( 32                                     ) ,\
-        HID_REPORT_SIZE    ( 1                                      ) ,\
-        HID_INPUT          ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ) ,\
-        /* Raw reporting */
-        HID_USAGE_PAGE_N     ( HID_USAGE_PAGE_VENDOR, 2                  ) ,\
-        HID_USAGE (0x01),\
-        HID_LOGICAL_MIN    ( 0x80                                   ) ,\
-        HID_LOGICAL_MAX    ( 0x7F                                   ) ,\
-        HID_REPORT_COUNT   ( 2                                    ) ,\
-        HID_REPORT_SIZE    ( 32                                      ) ,\
-        HID_INPUT        ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE | HID_WRAP_NO | HID_LINEAR | HID_PREFERRED_STATE | HID_NO_NULL_POSITION | HID_NON_VOLATILE ) ,\
-    HID_COLLECTION_END             ,\
-
+const tusb_desc_device_t XINPUT_DEVICE_DESCRIPTOR = {
+    .bLength = sizeof(tusb_desc_device_t),
+    .bDescriptorType = TUSB_DESC_DEVICE,
+    .bcdUSB = 0x0200,
+    .bDeviceClass = 0xFF,
+    .bDeviceSubClass = 0xFF,
+    .bDeviceProtocol = 0xFF,
+    .bMaxPacketSize0 = 64,
+    .idVendor = 0x045E,
+    .idProduct = 0x028E,
+    .bcdDevice = 0x0572,
+    .iManufacturer = 0x01,
+    .iProduct = 0x02,
+    .iSerialNumber = 0x03,
+    .bNumConfigurations = 0x01,
 };
 
-
-const uint8_t CONFIGURATION_DESCRIPTOR[] = {
-     // Configuration number, interface count, string index, total length, attribute, power in mA
-    TUD_CONFIG_DESCRIPTOR(1, 2, 0, 64, TUSB_DESC_CONFIG_ATT_REMOTE_WAKEUP, 500),
-
-    // Interface
-    9, TUSB_DESC_INTERFACE, 0x00, 0x00, 0x02, TUSB_CLASS_HID, 0x00, 0x00, 0x00,
-    // HID Descriptor
-    9, HID_DESC_TYPE_HID, U16_TO_U8S_LE(0x0111), 0, 1, HID_DESC_TYPE_REPORT, U16_TO_U8S_LE(sizeof(HID_REPORT_DESCRIPTOR)),
-    // Endpoint Descriptor
-    7, TUSB_DESC_ENDPOINT, 0x81, TUSB_XFER_INTERRUPT, U16_TO_U8S_LE(64), 8,
-    // Endpoint Descriptor
-    7, TUSB_DESC_ENDPOINT, 0x01, TUSB_XFER_INTERRUPT, U16_TO_U8S_LE(64), 8,
-
-    // Alternate Interface for WebUSB
-    // Interface
-    9, TUSB_DESC_INTERFACE, 0x01, 0x00, 0x02, TUSB_CLASS_VENDOR_SPECIFIC, 0x00, 0x00, 0x00,
-    // Endpoint Descriptor
-    7, TUSB_DESC_ENDPOINT, 0x82, TUSB_XFER_BULK, U16_TO_U8S_LE(64), 0,
-    // Endpoint Descriptor
-    7, TUSB_DESC_ENDPOINT, 0x02, TUSB_XFER_BULK, U16_TO_U8S_LE(64), 0,
+const uint8_t HID_REPORT_DESCRIPTOR[203] = {
+    0x05,0x01, 0x15,0x00, 0x09,0x04, 0xA1,0x01,
+    0x85,0x30, 0x05,0x01, 0x05,0x09, 0x19,0x01, 0x29,0x0A,
+    0x15,0x00, 0x25,0x01, 0x75,0x01, 0x95,0x0A, 0x55,0x00,
+    0x65,0x00, 0x81,0x02, 0x05,0x09, 0x19,0x0B, 0x29,0x0E,
+    0x15,0x00, 0x25,0x01, 0x75,0x01, 0x95,0x04, 0x81,0x02,
+    0x75,0x01, 0x95,0x02, 0x81,0x03,
+    0x0B,0x01,0x00,0x01,0x00, 0xA1,0x00,
+    0x0B,0x30,0x00,0x01,0x00, 0x0B,0x31,0x00,0x01,0x00,
+    0x0B,0x32,0x00,0x01,0x00, 0x0B,0x35,0x00,0x01,0x00,
+    0x15,0x00, 0x27,0xFF,0xFF,0x00,0x00, 0x75,0x10, 0x95,0x04,
+    0x81,0x02, 0xC0,
+    0x0B,0x39,0x00,0x01,0x00, 0x15,0x00, 0x25,0x07, 0x35,0x00,
+    0x46,0x3B,0x01, 0x65,0x14, 0x75,0x04, 0x95,0x01, 0x81,0x02,
+    0x05,0x09, 0x19,0x0F, 0x29,0x12, 0x15,0x00, 0x25,0x01,
+    0x75,0x01, 0x95,0x04, 0x81,0x02, 0x75,0x08, 0x95,0x34,
+    0x81,0x03,
+    0x06,0x00,0xFF, 0x85,0x21, 0x09,0x01, 0x75,0x08, 0x95,0x3F,
+    0x81,0x03, 0x85,0x81, 0x09,0x02, 0x75,0x08, 0x95,0x3F,
+    0x81,0x03, 0x85,0x01, 0x09,0x03, 0x75,0x08, 0x95,0x3F,
+    0x91,0x83, 0x85,0x10, 0x09,0x04, 0x75,0x08, 0x95,0x3F,
+    0x91,0x83, 0x85,0x80, 0x09,0x05, 0x75,0x08, 0x95,0x3F,
+    0x91,0x83, 0x85,0x82, 0x09,0x06, 0x75,0x08, 0x95,0x3F,
+    0x91,0x83, 0xC0,
 };
 
-const tusb_desc_webusb_url_t URL_DESCRIPTOR =
-    {
-        .bLength = 3 + sizeof(ZTH_WEBUSB_URL) - 1,
-        .bDescriptorType = 3, // WEBUSB URL type
-        .bScheme = 1,         // 0: http, 1: https
-        .url = ZTH_WEBUSB_URL};
-
-const char* STRING_DESCRIPTOR[] = {
-    // array of pointer to string descriptors
-    (char[]){0x09, 0x04},                // 0: is supported language is English (0x0409)
-    ZTH_MANUFACTURER,              // 1: Manufacturer
-    ZTH_PRODUCT,        // 2: Product
-    "000000",           // 3: Serials, should use chip ID
+const uint8_t SWITCH_CONFIGURATION_DESCRIPTOR[64] = {
+    9,TUSB_DESC_CONFIGURATION, U16_TO_U8S_LE(64), 2,1,0,0xA0,125,
+    9,TUSB_DESC_INTERFACE, 0,0,2,TUSB_CLASS_HID,0,0,0,
+    9,HID_DESC_TYPE_HID, U16_TO_U8S_LE(0x0111), 0,1,HID_DESC_TYPE_REPORT,
+      U16_TO_U8S_LE(sizeof(HID_REPORT_DESCRIPTOR)),
+    7,TUSB_DESC_ENDPOINT,0x81,TUSB_XFER_INTERRUPT,U16_TO_U8S_LE(64),1,
+    7,TUSB_DESC_ENDPOINT,0x01,TUSB_XFER_INTERRUPT,U16_TO_U8S_LE(64),1,
+    9,TUSB_DESC_INTERFACE,1,0,2,TUSB_CLASS_VENDOR_SPECIFIC,0,0,0,
+    7,TUSB_DESC_ENDPOINT,0x82,TUSB_XFER_BULK,U16_TO_U8S_LE(64),0,
+    7,TUSB_DESC_ENDPOINT,0x02,TUSB_XFER_BULK,U16_TO_U8S_LE(64),0,
 };
 
-// clang-format on
+const uint8_t XINPUT_CONFIGURATION_DESCRIPTOR[48] = {
+    0x09,0x02,0x30,0x00,0x01,0x01,0x00,0x80,0xFA,
+    0x09,0x04,0x00,0x00,0x02,0xFF,0x5D,0x01,0x00,
+    0x10,0x21,0x10,0x01,0x01,0x24,0x81,0x14,0x03,0x00,0x03,0x13,
+    0x02,0x00,0x03,0x00,
+    0x07,0x05,0x81,0x03,0x20,0x00,0x01,
+    0x07,0x05,0x02,0x03,0x20,0x00,0x01,
+};
+
+const tusb_desc_webusb_url_t URL_DESCRIPTOR = {
+    .bLength = 3 + sizeof(ZTH_WEBUSB_URL) - 1,
+    .bDescriptorType = 3,
+    .bScheme = 1,
+    .url = ZTH_WEBUSB_URL,
+};
+
+const char *SWITCH_STRING_DESCRIPTOR[] = {
+    (char[]){0x09, 0x04},
+    "Nintendo Co., Ltd.",
+    "Pro Controller",
+    "000000000001",
+};
+
+const char *XINPUT_STRING_DESCRIPTOR[] = {
+    (char[]){0x09, 0x04},
+    "Microsoft",
+    "Controller",
+    "000000000001",
+};

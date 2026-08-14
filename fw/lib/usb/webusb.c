@@ -37,7 +37,9 @@ bool webusb_ready_blocking(int timeout) {
 }
 
 void webusb_command_processor(uint8_t *data, const uint32_t data_size) {
-    (void) data_size;
+    if (data == NULL || data_size == 0)
+        return;
+    memset(_webusb_out_buffer, 0, sizeof(_webusb_out_buffer));
 
     if ((data[0] & WEBUSB_CMD_USER_MASK) == WEBUSB_CMD_USER_VAL) {
         bool perform_write =
@@ -132,17 +134,29 @@ void webusb_command_processor(uint8_t *data, const uint32_t data_size) {
 
     case WEBUSB_CMD_REMAP_SET: {
         debug_print("WebUSB: Got Remap SET command.\n");
-        comms_mode_t c = (comms_mode_t)data[1];
+        remap_mode_t c = (remap_mode_t)data[1];
         uint8_t btn = data[2];
         uint8_t bind = data[3];
+        if (c >= REMAP_MODE_COUNT || btn >= 32 ||
+            (bind != 0xFF && bind > 32))
+            break;
         switch (c) {
-        case COMMS_MODE_N64: {
+        case REMAP_MODE_N64: {
             _settings[_profile].btn_remap_profile_n64.p[btn] = bind;
+            break;
         }
-        case COMMS_MODE_GAMECUBE: {
+        case REMAP_MODE_GAMECUBE: {
             _settings[_profile].btn_remap_profile_gamecube.p[btn] = bind;
             break;
         }
+        case REMAP_MODE_XINPUT:
+            _settings[_profile].btn_remap_profile_xinput.p[btn] = bind;
+            break;
+        case REMAP_MODE_SWITCH:
+            _settings[_profile].btn_remap_profile_switch.p[btn] = bind;
+            break;
+        default:
+            break;
         }
         // remap_listen_enable(data[1], data[2]);
     } break;
@@ -151,19 +165,73 @@ void webusb_command_processor(uint8_t *data, const uint32_t data_size) {
         debug_print("WebUSB: Got Remap GET command.\n");
         _webusb_out_buffer[0] = WEBUSB_CMD_REMAP_GET;
         _webusb_out_buffer[1] = data[1];
-        comms_mode_t c = (comms_mode_t)data[1];
+        remap_mode_t c = (remap_mode_t)data[1];
         switch (c) {
-        case COMMS_MODE_N64: {
+        case REMAP_MODE_N64: {
             memcpy(_webusb_out_buffer + 2, _settings[_profile].btn_remap_profile_n64.p,
                    32);
             break;
         }
-        case COMMS_MODE_GAMECUBE: {
+        case REMAP_MODE_GAMECUBE: {
             memcpy(_webusb_out_buffer + 2,
                    _settings[_profile].btn_remap_profile_gamecube.p, 32);
             break;
         }
+        case REMAP_MODE_XINPUT:
+            memcpy(_webusb_out_buffer + 2,
+                   _settings[_profile].btn_remap_profile_xinput.p, 32);
+            break;
+        case REMAP_MODE_SWITCH:
+            memcpy(_webusb_out_buffer + 2,
+                   _settings[_profile].btn_remap_profile_switch.p, 32);
+            break;
+        default:
+            memset(_webusb_out_buffer + 2, 0xFF, 32);
+            break;
         }
+        webusb_output_en = true;
+    } break;
+
+    case WEBUSB_CMD_COMMS_MODE_SET:
+        if (data[1] < COMMS_MODE_COUNT) {
+            _settings[_profile].comms_mode = (comms_mode_t)data[1];
+            _webusb_out_buffer[0] = WEBUSB_CMD_COMMS_MODE_SET;
+            _webusb_out_buffer[1] = data[1];
+            webusb_output_en = true;
+        }
+        break;
+
+    case WEBUSB_CMD_COMMS_MODE_GET:
+        _webusb_out_buffer[0] = WEBUSB_CMD_COMMS_MODE_GET;
+        _webusb_out_buffer[1] = _settings[_profile].comms_mode;
+        webusb_output_en = true;
+        break;
+
+    case WEBUSB_CMD_RAW_N64_GET: {
+        btn_data_t mapped = {0};
+        btn_remap_for_mode(REMAP_MODE_N64, &_buttons, &mapped);
+        n64_input_t n64 = {0};
+        n64.button_a = mapped.s.b1;
+        n64.button_b = mapped.s.b2;
+        n64.cpad_up = mapped.s.b3;
+        n64.cpad_down = mapped.s.b4;
+        n64.cpad_left = mapped.s.b5;
+        n64.cpad_right = mapped.s.b6;
+        n64.button_start = mapped.s.b7;
+        n64.button_l = mapped.s.b8;
+        n64.button_r = mapped.s.b9;
+        n64.button_z = mapped.s.b10;
+        n64.dpad_down = mapped.s.b11;
+        n64.dpad_left = mapped.s.b12;
+        n64.dpad_right = mapped.s.b13;
+        n64.dpad_up = mapped.s.b14;
+        n64.stick_x = (int8_t)(_analog_data_processed.ax1 * 127.0f);
+        n64.stick_y = (int8_t)(_analog_data_processed.ax2 * 127.0f);
+        _webusb_out_buffer[0] = WEBUSB_CMD_RAW_N64_GET;
+        memcpy(&_webusb_out_buffer[1], &n64, sizeof(n64));
+        _webusb_out_buffer[5] = _settings[_profile].calib_results.calibrated;
+        memcpy(&_webusb_out_buffer[8], &_analog_data.ax1, sizeof(float));
+        memcpy(&_webusb_out_buffer[12], &_analog_data.ax2, sizeof(float));
         webusb_output_en = true;
     } break;
 

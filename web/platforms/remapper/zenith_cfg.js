@@ -4,8 +4,8 @@
 
 // Adjust this based on your zenith_cfg.h file!
 
-const devVID = 0x7318;
-const devPID = 0x0002;
+const devVID = 0x057E;
+const devPID = 0x2009;
 const vendorName = "Zenith Control Labs";
 const productName = "N64 Remapper";
 
@@ -43,4 +43,4 @@ const buttonNames = [
     "",
     "",
     "",
-]  
+]

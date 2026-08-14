@@ -1,126 +1,75 @@
-/*jshint esversion: 6 */
+/*jshint esversion: 8 */
 // @ts-check
 
-import { WebUSBCmdMap, setSaveIndicator, usbDevice } from "./cntlr.js";
+import { WebUSBCmdMap, setSaveIndicator, writeUSBData } from "./cntlr.js";
 
-let remapDiv = /** @type {HTMLDivElement} */ (document.getElementById("bindings-fill-in"));
+const remapDiv = /** @type {HTMLDivElement} */ (document.getElementById("bindings-fill-in"));
 
-export const CommsMode = {
-    N64: 0x00,
-    Gamecube: 0x01
+export const RemapMode = { N64: 0, GameCube: 1, XInput: 2, Switch: 3 };
+export const CommsMode = RemapMode;
+
+const logicalNames = {
+    [RemapMode.N64]: ["A", "B", "C Up", "C Down", "C Left", "C Right", "Start", "L", "R", "Z", "D Down", "D Left", "D Right", "D Up"],
+    [RemapMode.GameCube]: ["A", "B", "X", "Y", "Start", "L", "R", "Z", "D Down", "D Left", "D Right", "D Up"],
+    [RemapMode.Switch]: ["Y", "X", "B", "A", "", "", "R", "ZR", "Minus", "Plus", "R Stick", "L Stick", "Home", "Capture", "", "", "D Down", "D Up", "D Right", "D Left", "", "", "L", "ZL"],
+    [RemapMode.XInput]: ["D Up", "D Down", "D Left", "D Right", "Start", "Back", "L Stick", "R Stick", "LB", "RB", "Guide", "", "A", "B", "X", "Y", "LT", "RT"]
+};
+
+export let _commsMode = RemapMode.Switch;
+
+export async function setRemapMode(mode) {
+    if (!Object.values(RemapMode).includes(mode)) return;
+    _commsMode = mode;
+    await writeUSBData(new Uint8Array([WebUSBCmdMap.REMAP_GET, mode]));
 }
 
-const N64Buttons = [
-    "A",
-    "B",
-    "CU",
-    "CD",
-    "CL",
-    "CR",
-    "Start",
-    "L",
-    "R",
-    "Z",
-    "DD",
-    "DL",
-    "DR",
-    "DU",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-]
+export const setCommsMode = setRemapMode;
 
-export let _commsMode;
-
-export async function setCommsMode(commsMode) {
-    if (!(commsMode in Object.values(CommsMode))) {
-        console.error("Tried to set illegal comms mode..");
-    }
-    await usbDevice.transferOut(2, new Uint8Array([WebUSBCmdMap.REMAP_GET, commsMode]));
-    _commsMode = commsMode;
-}
-
-
-export async function setBinding() {
-    const btn = buttonNames.indexOf(this.name);
-    const bind = Number(this.value);
-    if (btn > 32 || (bind != 0xFF && bind > 32)) {
-        console.error("Internal button remap error");
-        return;
-    }
-    await usbDevice.transferOut(2, new Uint8Array([WebUSBCmdMap.REMAP_SET, _commsMode, btn, bind]));
+async function setBinding(event) {
+    const select = /** @type {HTMLSelectElement} */ (event.currentTarget);
+    const source = Number(select.dataset.source);
+    const destination = Number(select.value);
+    await writeUSBData(new Uint8Array([
+        WebUSBCmdMap.REMAP_SET, _commsMode, source, destination
+    ]));
     setSaveIndicator();
 }
 
-function getRemappingOptionsElems(commsMode) {
-    
-    // doesnt actually exist in firmware yet
-    let emptyOption = /** @type {HTMLOptionElement} */ (document.createElement("option"));
-    emptyOption.value = (0xFF).toString();
-    emptyOption.textContent = "UNBOUND";
-    let elems = [emptyOption];
-
-    let btnNames = []
-    switch (commsMode) {
-        case CommsMode.N64: 
-            btnNames = N64Buttons;
-            break;
-        case CommsMode.Gamecube:
-            //btnNames = ;
-            break;
-    }
-    
-    for (let i = 0; i < 32; i++) {
-        if (btnNames[i]) {
-            let optionElem = /** @type {HTMLOptionElement} */ (document.createElement("option"));
-            optionElem.value = (i+1).toString();
-            optionElem.textContent = btnNames[i];
-            elems.push(optionElem);
-        }
-    }
-    return elems;
+function optionsFor(mode, source, binding) {
+    const options = [{value: 0xFF, label: "Unbound"}];
+    logicalNames[mode].forEach((label, index) => {
+        if (label) options.push({value: index + 1, label});
+    });
+    return options.map(option => {
+        const element = document.createElement("option");
+        element.value = String(option.value);
+        element.textContent = option.label;
+        element.selected = option.value === binding ||
+            (binding === 0 && option.value === source + 1);
+        return element;
+    });
 }
 
 export function placeRemapping(data) {
+    const mode = data.getUint8(1);
+    if (mode !== _commsMode) return;
     remapDiv.replaceChildren();
-
-    const commsMode = data.getUint8(1);
-
-    for (let i = 0; i < 32; i++) {
-        if (buttonNames[i]) {
-            let inputElem = document.createElement("select");
-            const optElems = getRemappingOptionsElems(commsMode);
-            const bind = data.getUint8(i + 2);
-            optElems.forEach(optElem => {
-                if ((Number(optElem.value) == bind)
-                ||  ((bind == 0) && Number(optElem.value) == (i+1))) {
-                    optElem.selected = true;
-                }
-                // TODO; this could be problematic
-                inputElem.appendChild(optElem);
-            });
-            inputElem.name = buttonNames[i];
-            inputElem.onchange = setBinding;
-            let spanElem = document.createElement("span");
-            spanElem.textContent = buttonNames[i];
-            remapDiv.appendChild(spanElem);
-            remapDiv.appendChild(inputElem);
-            remapDiv.appendChild(document.createElement("br")); 
-        }
+    for (let source = 0; source < 32; ++source) {
+        if (!buttonNames[source]) continue;
+        const row = document.createElement("label");
+        row.className = "binding-row";
+        const physical = document.createElement("span");
+        physical.textContent = buttonNames[source];
+        const arrow = document.createElement("span");
+        arrow.className = "binding-arrow";
+        arrow.textContent = "→";
+        const select = document.createElement("select");
+        select.className = "form-select";
+        select.dataset.source = String(source);
+        optionsFor(mode, source, data.getUint8(source + 2))
+            .forEach(option => select.appendChild(option));
+        select.addEventListener("change", setBinding);
+        row.append(physical, arrow, select);
+        remapDiv.appendChild(row);
     }
 }

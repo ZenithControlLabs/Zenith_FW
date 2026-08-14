@@ -1,2 +1,4 @@
 build/
+build-*/
+project64-plugin/build-*/
 .cache/

@@ -39,6 +39,12 @@ void settings_reset_to_factory() {
         .btn_remap_profile_gamecube = {
             .p = ZTH_GAMECUBE_REMAP_DEFAULT
         },
+        .btn_remap_profile_xinput = {
+            .p = ZTH_XINPUT_REMAP_DEFAULT
+        },
+        .btn_remap_profile_switch = {
+            .p = ZTH_SWITCH_REMAP_DEFAULT
+        },
         .gate_limiter_enable = false,
         .user_settings = {0}
     };

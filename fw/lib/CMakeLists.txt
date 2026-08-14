@@ -10,6 +10,8 @@ target_sources(zenith_lib INTERFACE
   ${CMAKE_CURRENT_LIST_DIR}/usb/usb.c 
   ${CMAKE_CURRENT_LIST_DIR}/usb/descriptors.c 
   ${CMAKE_CURRENT_LIST_DIR}/usb/webusb.c 
+  ${CMAKE_CURRENT_LIST_DIR}/usb/switch_protocol.c
+  ${CMAKE_CURRENT_LIST_DIR}/usb/xinput.c
 
   ${CMAKE_CURRENT_LIST_DIR}/drivers/ads7142.c
   ${CMAKE_CURRENT_LIST_DIR}/drivers/lis3mdl.c

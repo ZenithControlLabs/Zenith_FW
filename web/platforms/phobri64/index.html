@@ -1,138 +1,132 @@
-<!DOCTYPE html5>
+<!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
-    <link rel="stylesheet" href="page.css">
-    <title>Phobri64</title>
-  </head>
-  <body>
-    <div class="parent">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111827">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="page.css">
+  <title>Zenith Configurator</title>
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">ZENITH CONTROL LABS</p>
       <h1 id="app-title"></h1>
-      <!-- PLACEHOLDER DEV TEXT FOR CICD -->
-      <button type="button" onClick="window._fns.connect()">connect controller</button>
-      <div id="disconnect-div" class="dc-or-c-div">
-        <h3 style="color: red">Controller Disconnected</span></h2>
-      </div>
-      <div id="connect-div" class="dc-or-c-div" style="display:none"> 
-        
-        <div>
-          <canvas id="controller-display" width="250" height="250"></canvas></br>
-          <input type="checkbox" id="debug-reporting-checked" onClick="window._fns.updateDbgReporting()" checked> Debug Reporting</input></br>
-          <span id="dbg-text"></span></br></br>
-          <span id="version-text"></span></br>
-          <button type="button" onClick="window._fns.updateFw()">enter firmware update mode</button></br>
-        </div>
-        
-        <div>
-          <div id="standard-div" class="dc-or-c-div">
-            <div id="info-div" class="cal-or-std-div">
-              X: <span id="x-val"></span></br>
-              Y: <span id="y-val"></span></br>
-              <button type="button" onClick="window._fns.startCalib()">start calibration</button> 
-              <button type="button" onClick="window._fns.saveSettings()">save settings</button></br>
-              <button type="button" onClick="window._fns.resetSettings()">reset settings</button>
-              </br>
-              <span id="save-indicator-span" class="save-blinker">You have unsaved changes!</span>
-              <span id="calib-indicator-span" class="save-blinker">Controller is uncalibrated!</span>
-            </div>
-
-            <div class="cal-or-std-div">
-              <ul class="nav nav-tabs" id="myTab" role="tablist">
-                <li class="nav-item" role="presentation">
-                  <button class="nav-link active" id="notchpoints-tab" data-bs-toggle="tab" data-bs-target="#notchpoints" type="button" role="tab" aria-controls="home" aria-selected="true">Notch Points</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                  <button class="nav-link" id="btnremap-tab" data-bs-toggle="tab" data-bs-target="#btnremap" type="button" role="tab" aria-controls="profile" aria-selected="false">Button Remapping</button>
-                </li>
-              </ul>
-              <div class="tab-content" id="myTabContent">
-                <div class="tab-pane fade show active" id="notchpoints" role="tabpanel" aria-labelledby="notchpoints-tab">
-                  <div>
-                    RIGHT: </br>
-                    <div style="display:flex">
-                    X: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-0-x"></input> 
-                    Y: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-0-y"></input> 
-                    ANGLE DEADZONE: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-0-deadzone"></input> 
-                    </div>
-                    UPRIGHT: </br>
-                    <div style="display:flex">
-                    X: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-1-x"></input> 
-                    Y: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-1-y"></input> 
-                    ANGLE DEADZONE: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-1-deadzone"></input> 
-                    </div>
-                    UP: </br>
-                    <div style="display:flex">
-                    X: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-2-x"></input> 
-                    Y: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-2-y"></input> 
-                    ANGLE DEADZONE: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-2-deadzone"></input> 
-                    </div>
-                    UPLEFT: </br>
-                    <div style="display:flex">
-                    X: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-3-x"></input> 
-                    Y: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-3-y"></input> 
-                    ANGLE DEADZONE: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-3-deadzone"></input> 
-                    </div>
-                    LEFT: </br>
-                    <div style="display:flex">
-                    X: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-4-x"></input> 
-                    Y: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-4-y"></input> 
-                    ANGLE DEADZONE: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-4-deadzone"></input> 
-                    </div>
-                    DOWNLEFT: </br>
-                    <div style="display:flex">
-                    X: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-5-x"></input> 
-                    Y: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-5-y"></input> 
-                    ANGLE DEADZONE: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-5-deadzone"></input> 
-                    </div>
-                    DOWN: </br>
-                    <div style="display:flex">
-                    X: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-6-x"></input> 
-                    Y: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-6-y"></input> 
-                    ANGLE DEADZONE: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-6-deadzone"></input> 
-                    </div>
-                    DOWNRIGHT: </br>
-                    <div style="display:flex">
-                    X: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-7-x"></input> 
-                    Y: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-7-y"></input> 
-                    ANGLE DEADZONE: <input type="text" class="notch-input" onchange="window._fns.updateNotchPoint(this)" id="notch-7-deadzone"></input> 
-                    </div>
-                  </div>
-                  Magnitude Threshold (%): <input type="text" class="notch-input" onchange="window._fns.updateMagThresh(this)" id="mag-thresh"></input> </br>
-                  Enable X-axis Gate Limiter: <input type="checkbox" onchange="window._fns.updateGateLimiter(this)" id="gate-limiter-enable"></input> </br>
-                  Snapback Filter Cutoff (Hz): <input type="text" class="notch-input" onchange="window._fns.updateLpfCutoff(this)" id="lpf-cutoff-hz"></input> 
-                </div>
-                <div class="tab-pane fade" id="btnremap" role="tabpanel" aria-labelledby="btnremap-tab">
-                  <select id="Comms-mode" name="Comms Mode" onchange="window._fns.setCommsMode(Number(this.value))">
-                    <option value="0">N64</option>
-                    <option value="1">Gamecube</option>
-                  </select>
-                  <div id="bindings-fill-in"></div>
-                <div id="bindings-div"></div>
-                </div>
-            </div>
-            </div>          
-          </div>
-          <div id="cal-div" class="cal-or-std-div" style="display:none">
-            Calibration: <span id="cal-step"></span>/16</br>
-            <button type="button" onClick="window._fns.prevStep()">prev step</button>
-  
-            
-            <button type="button" onClick="window._fns.nextStep()">next step</button>   
-            
-          </div>
-        </div>
-        
-      </div>
-      
-      <!-- <button type="button" onClick="download()">download report CSV</button> -->
     </div>
-    <!-- Bootstrap JS -->
-    <script type="module" src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe" crossorigin="anonymous"></script>
-    <script src="zenith_cfg.js"></script>
-    <script type="module" src="main.js"></script>
-  </body>
-  </html>
-  
+    <div class="header-actions">
+      <span id="connection-status" class="status-pill">Disconnected</span>
+      <button class="btn btn-primary" type="button" onclick="window._fns.connect()">Connect controller</button>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <section id="disconnect-div" class="empty-state">
+      <div class="controller-mark">64</div>
+      <h2>Ready when you are</h2>
+      <p>Connect in Switch Pro mode to calibrate the stick, change mappings, or choose another USB mode.</p>
+      <p class="support-note">Chrome or Edge is required for WebUSB.</p>
+    </section>
+
+    <section id="connect-div" class="dashboard" style="display:none">
+      <aside class="sidebar">
+        <article class="panel input-panel">
+          <div class="panel-heading">
+            <div><p class="eyebrow">LIVE INPUT</p><h2>Stick signal</h2></div>
+            <span class="live-dot">Live</span>
+          </div>
+          <canvas id="controller-display" width="250" height="250"></canvas>
+          <div class="axis-readout">
+            <div><span>X axis</span><strong id="x-val">0</strong></div>
+            <div><span>Y axis</span><strong id="y-val">0</strong></div>
+          </div>
+          <input type="checkbox" id="debug-reporting-checked" hidden>
+          <span id="dbg-text" class="signal-note">Green: raw output · ring: calibrated output</span>
+          <section id="cal-div" class="calibration-overlay" style="display:none">
+            <article class="calibration-card">
+              <p class="eyebrow">GUIDED CALIBRATION</p>
+              <h2>Step <span id="cal-step"></span> of 16</h2>
+              <p>Follow the stick position shown by the calibration sequence.</p>
+              <div class="cal-actions">
+                <button class="btn btn-outline-light" onclick="window._fns.prevStep()">Previous</button>
+                <button class="btn btn-primary" onclick="window._fns.nextStep()">Next</button>
+              </div>
+            </article>
+          </section>
+        </article>
+
+        <article class="panel device-panel">
+          <p class="eyebrow">DEVICE</p>
+          <h2>Operating mode</h2>
+          <label class="field-label" for="operating-mode">Mode after next reconnect</label>
+          <select id="operating-mode" class="form-select" onchange="window._fns.setOperatingMode(Number(this.value))">
+            <option value="0">N64 wired + Switch Pro USB</option>
+            <option value="1">GameCube wired + Switch Pro USB</option>
+            <option value="2">XInput USB</option>
+          </select>
+          <p id="mode-notice" class="support-note">Switch Pro mode keeps the web configurator available.</p>
+          <span id="version-text" class="version-text"></span>
+          <div class="button-stack">
+            <button class="btn btn-primary" onclick="window._fns.saveSettings()">Save settings</button>
+            <button class="btn btn-outline-light" onclick="window._fns.resetSettings()">Restore defaults</button>
+            <button class="btn btn-link" onclick="window._fns.updateFw()">Enter firmware update mode</button>
+          </div>
+          <span id="save-indicator-span" class="change-pill">Unsaved changes</span>
+          <span id="calib-indicator-span" class="warning-pill">Calibration required</span>
+        </article>
+      </aside>
+
+      <section class="panel workspace-panel">
+        <ul class="nav nav-pills" role="tablist">
+          <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#notchpoints" type="button">Stick tuning</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#btnremap" type="button">Button mapping</button></li>
+        </ul>
+
+        <div class="tab-content">
+          <div class="tab-pane fade show active" id="notchpoints">
+            <div class="section-title">
+              <div><p class="eyebrow">CALIBRATION</p><h2>Notches and response</h2></div>
+              <button class="btn btn-outline-light" onclick="window._fns.startCalib()">Run calibration</button>
+            </div>
+            <div class="notch-table">
+              <div class="notch-header"><span>Direction</span><span>X</span><span>Y</span><span>Angle deadzone</span></div>
+              <label><strong>Right</strong><input id="notch-0-x" onchange="window._fns.updateNotchPoint(this)"><input id="notch-0-y" onchange="window._fns.updateNotchPoint(this)"><input id="notch-0-deadzone" onchange="window._fns.updateNotchPoint(this)"></label>
+              <label><strong>Up-right</strong><input id="notch-1-x" onchange="window._fns.updateNotchPoint(this)"><input id="notch-1-y" onchange="window._fns.updateNotchPoint(this)"><input id="notch-1-deadzone" onchange="window._fns.updateNotchPoint(this)"></label>
+              <label><strong>Up</strong><input id="notch-2-x" onchange="window._fns.updateNotchPoint(this)"><input id="notch-2-y" onchange="window._fns.updateNotchPoint(this)"><input id="notch-2-deadzone" onchange="window._fns.updateNotchPoint(this)"></label>
+              <label><strong>Up-left</strong><input id="notch-3-x" onchange="window._fns.updateNotchPoint(this)"><input id="notch-3-y" onchange="window._fns.updateNotchPoint(this)"><input id="notch-3-deadzone" onchange="window._fns.updateNotchPoint(this)"></label>
+              <label><strong>Left</strong><input id="notch-4-x" onchange="window._fns.updateNotchPoint(this)"><input id="notch-4-y" onchange="window._fns.updateNotchPoint(this)"><input id="notch-4-deadzone" onchange="window._fns.updateNotchPoint(this)"></label>
+              <label><strong>Down-left</strong><input id="notch-5-x" onchange="window._fns.updateNotchPoint(this)"><input id="notch-5-y" onchange="window._fns.updateNotchPoint(this)"><input id="notch-5-deadzone" onchange="window._fns.updateNotchPoint(this)"></label>
+              <label><strong>Down</strong><input id="notch-6-x" onchange="window._fns.updateNotchPoint(this)"><input id="notch-6-y" onchange="window._fns.updateNotchPoint(this)"><input id="notch-6-deadzone" onchange="window._fns.updateNotchPoint(this)"></label>
+              <label><strong>Down-right</strong><input id="notch-7-x" onchange="window._fns.updateNotchPoint(this)"><input id="notch-7-y" onchange="window._fns.updateNotchPoint(this)"><input id="notch-7-deadzone" onchange="window._fns.updateNotchPoint(this)"></label>
+            </div>
+            <div class="tuning-grid">
+              <label><span>Magnitude threshold</span><small>Percent into a notch</small><input id="mag-thresh" onchange="window._fns.updateMagThresh(this)"></label>
+              <label><span>Snapback filter</span><small>Low-pass cutoff in Hz</small><input id="lpf-cutoff-hz" onchange="window._fns.updateLpfCutoff(this)"></label>
+              <label class="toggle-row"><span><span>X-axis gate limiter</span><small>Constrain horizontal travel</small></span><input type="checkbox" id="gate-limiter-enable" onchange="window._fns.updateGateLimiter(this)"></label>
+            </div>
+          </div>
+
+          <div class="tab-pane fade" id="btnremap">
+            <div class="section-title">
+              <div><p class="eyebrow">ONE-TO-ONE MAPPING</p><h2>Physical to logical buttons</h2></div>
+              <select id="remap-mode" class="form-select compact-select" onchange="window._fns.setRemapMode(Number(this.value))">
+                <option value="3" selected>Switch Pro</option>
+                <option value="0">N64 / Joybus</option>
+                <option value="2">XInput</option>
+                <option value="1">GameCube</option>
+              </select>
+            </div>
+            <p class="support-note">Each physical control produces exactly one logical button. Choose Unbound to disable it.</p>
+            <div id="bindings-fill-in" class="bindings-grid"></div>
+          </div>
+        </div>
+      </section>
+
+    </section>
+  </main>
+
+  <script type="module" src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="zenith_cfg.js"></script>
+  <script type="module" src="main.js"></script>
+</body>
+</html>

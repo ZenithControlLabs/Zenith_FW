@@ -35,8 +35,6 @@ uint8_t const desc_bos[] = {
     // Microsoft OS 2.0 descriptor
     TUD_BOS_MS_OS_20_DESCRIPTOR(MS_OS_20_DESC_LEN, VENDOR_REQUEST_MICROSOFT)};
 
-uint8_t const *tud_descriptor_bos_cb(void) { return desc_bos; }
-
 uint8_t const desc_ms_os_20[] = {
     // Set header: length, type, windows version, total length
     U16_TO_U8S_LE(0x000A), U16_TO_U8S_LE(MS_OS_20_SET_HEADER_DESCRIPTOR),

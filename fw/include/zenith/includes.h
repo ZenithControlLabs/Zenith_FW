@@ -31,6 +31,8 @@
 #include "zenith/usb/descriptors.h"
 #include "zenith/usb/desc_bos.h"
 #include "zenith/usb/webusb.h"
+#include "zenith/usb/switch_protocol.h"
+#include "zenith/usb/xinput.h"
 #include "zenith/usb/usb.h" // The USB interface.
 
 #include "joybus.pio.h"

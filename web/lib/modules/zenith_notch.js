@@ -1,7 +1,7 @@
 /*jshint esversion: 6 */
 // @ts-check
 
-import { setSaveIndicator, usbDevice, WebUSBCmdMap } from "./cntlr.js";
+import { setSaveIndicator, WebUSBCmdMap, writeUSBData } from "./cntlr.js";
 import { IntToFloat32, swap32 } from "./utils.js";
 
 function toDeadzoneAng(num) {
@@ -57,7 +57,7 @@ export async function updateNotchPoint(elemName) {
     buf[3] = yvalue;
     console.log(buf);
     console.log(`id: ${ind}, x: ${xvalue}, y: ${yvalue}, ang: ${deadzonevalue}`);
-    await usbDevice.transferOut(2, buf);
+    await writeUSBData(buf);
     setSaveIndicator();
 }
 
@@ -74,7 +74,7 @@ export async function updateMagThresh(elemName) {
     (new Float32Array(buf))[1] = new_thresh / 100.;
     buf = (new Uint8Array(buf));
     buf[0] = WebUSBCmdMap.MAG_THRESH_SET;
-    await usbDevice.transferOut(2, buf);
+    await writeUSBData(buf);
     setSaveIndicator();
 }
 
@@ -89,7 +89,7 @@ export async function updateLpfCutoff(elemName) {
     buf = (new Uint8Array(buf));
     buf[0] = WebUSBCmdMap.LPF_CUTOFF_SET;
     console.log(buf);
-    await usbDevice.transferOut(2, buf);
+    await writeUSBData(buf);
     setSaveIndicator();
 }
 
@@ -100,7 +100,7 @@ export async function updateGateLimiter(elemName) {
     buf = (new Uint8Array(buf));
     buf[0] = WebUSBCmdMap.GATE_LIMITER_SET;
     buf[1] = new_status;
-    await usbDevice.transferOut(2, buf);
+    await writeUSBData(buf);
     setSaveIndicator();
 }
 

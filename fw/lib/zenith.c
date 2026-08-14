@@ -19,7 +19,7 @@ void zenith_loop_core0(void) {
         cb_zenith_read_buttons(&_buttons);
         btn_remap_task(&_buttons, &_buttons_processed);
 
-        usb_task(atomic_load(&_timestamp), &_buttons_processed,
+        usb_task(atomic_load(&_timestamp), &_buttons,
                  &_analog_data_processed, &_analog_data);
 
         comms_task(atomic_load(&_timestamp), &_buttons_processed,
@@ -59,6 +59,23 @@ void zenith_start() {
     settings_load();
 
     cb_zenith_init_hardware();
+
+    /* Boot shortcuts choose and persist a USB personality before USB starts.
+       A takes priority if both buttons are held, preserving the recovery path
+       to the Switch Pro + WebUSB personality. */
+    btn_data_t boot_buttons = {0};
+    sleep_ms(5);
+    cb_zenith_read_buttons(&boot_buttons);
+    comms_mode_t boot_mode = _settings[_profile].comms_mode;
+    if (boot_buttons.s.b1) {
+        boot_mode = COMMS_MODE_N64;
+    } else if (boot_buttons.s.b2) {
+        boot_mode = COMMS_MODE_XINPUT;
+    }
+    if (_settings[_profile].comms_mode != boot_mode) {
+        _settings[_profile].comms_mode = boot_mode;
+        settings_inform_commit();
+    }
 
     usb_init();
 

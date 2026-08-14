@@ -1,17 +1,14 @@
-/*jshint esversion: 6 */
+/*jshint esversion: 8 */
 // @ts-check
 
 import { sleep_ms } from "./utils.js";
 import { placeCalibStatus } from "./zenith_calib.js";
-import { updateInputDisplay } from "./zenith_input.js";
+import { updateInputDisplayRaw } from "./zenith_input.js";
 import { placeGateLimiter, placeLpfCutoff, placeMagThresh, placeNotches } from "./zenith_notch.js";
-import { CommsMode, _commsMode, placeRemapping, setCommsMode } from "./zenith_remap.js";
+import { RemapMode, placeRemapping, setRemapMode } from "./zenith_remap.js";
 
-const filters = {filters: [{
-    vendorId: devVID,
-    productId: devPID,
-}]};
-
+const filters = {filters: [{vendorId: 0x057E, productId: 0x2009}]};
+const LIVE_INPUT_INTERVAL_MS = 8;
 
 export const WebUSBCmdMap = {
     FW_GET: 0xA1,
@@ -29,224 +26,203 @@ export const WebUSBCmdMap = {
     GATE_LIMITER_GET: 0xA7,
     LPF_CUTOFF_SET: 0x08,
     LPF_CUTOFF_GET: 0xA8,
+    COMMS_MODE_SET: 0x09,
+    COMMS_MODE_GET: 0xA9,
+    RAW_N64_GET: 0xAA,
     UPDATE_FW: 0xF1,
     COMMIT_SETTINGS: 0xF2,
     RESET_SETTINGS: 0xF3
-}
+};
 
 export let usbDevice;
-export let hidDevice;
+let listenGeneration = 0;
+let rawTimer;
+let rawWritePending = false;
+let writeQueue = Promise.resolve();
 
-let disconnectDiv = /** @type {HTMLDivElement} */ (document.getElementById("disconnect-div"));
-let connectDiv = /** @type {HTMLDivElement} */ (document.getElementById("connect-div"));
-let saveIndicatorSpan = /** @type {HTMLSpanElement} */ (document.getElementById("save-indicator-span"));
+const minimumResponseLength = {
+    [WebUSBCmdMap.FW_GET]: 3,
+    [WebUSBCmdMap.CALIBRATION_STATUS_GET]: 3,
+    [WebUSBCmdMap.NOTCHES_GET]: 49,
+    [WebUSBCmdMap.REMAP_GET]: 34,
+    [WebUSBCmdMap.MAG_THRESH_GET]: 8,
+    [WebUSBCmdMap.GATE_LIMITER_GET]: 2,
+    [WebUSBCmdMap.LPF_CUTOFF_GET]: 8,
+    [WebUSBCmdMap.COMMS_MODE_GET]: 2,
+    [WebUSBCmdMap.RAW_N64_GET]: 16,
+};
 
-function enableMenus(en) {
-    disconnectDiv.style.display = en ? "none" : "flex";
-    connectDiv.style.display = en ? "flex" : "none";
+const disconnected = /** @type {HTMLDivElement} */ (document.getElementById("disconnect-div"));
+const connected = /** @type {HTMLDivElement} */ (document.getElementById("connect-div"));
+const saveIndicator = /** @type {HTMLSpanElement} */ (document.getElementById("save-indicator-span"));
+const statusPill = document.getElementById("connection-status");
+
+function showConnected(value) {
+    disconnected.style.display = value ? "none" : "grid";
+    connected.style.display = value ? "grid" : "none";
+    statusPill.textContent = value ? "Connected" : "Disconnected";
+    statusPill.classList.toggle("connected", value);
 }
 
 export async function connect() {
-    // @ts-ignore
-    let usbDevices = await navigator.usb.getDevices(filters);
-    // @ts-ignore
-    let hidDevices = await navigator.hid.getDevices(filters);
-
-    if (usbDevices[0] && hidDevices[0]) {
-        console.log("Already got device.");
-        usbDevice = usbDevices[0];
-        hidDevice = hidDevices[0];
-    } else {
-        console.log("Need device permission or not found.");
-        // @ts-ignore
-        usbDevice = await navigator.usb.requestDevice(filters);
-        // @ts-ignore
-        [hidDevice] = await navigator.hid.requestDevice(filters);
-    }    
-
-    if ((usbDevice == null) || (hidDevice == null)) {
-        window.alert(`Please connect a valid ${productName} device.`);
-        return;
-    }
-
     try {
-        await initWebUSBDevice();
-        await initWebHIDDevice();
-    } catch (e) {
-        console.error(e);
-        return;
-    }
-    
-    clearSaveIndicator();
-    enableMenus(true);
-}
-
-///////////////////
-// WebHID logic //
-/////////////////
-
-async function initWebHIDDevice () {
-    try {
-        if (!hidDevice.opened) {
-            await hidDevice.open();
+        // @ts-ignore
+        const permitted = await navigator.usb.getDevices();
+        usbDevice = permitted.find(device => device.vendorId === 0x057E && device.productId === 0x2009);
+        if (!usbDevice) {
+            // @ts-ignore
+            usbDevice = await navigator.usb.requestDevice(filters);
         }
-        hidDevice.addEventListener("inputreport", handleInputReport);
+        await initWebUSBDevice();
+        clearSaveIndicator();
+        showConnected(true);
     } catch (error) {
-        window.alert(`Could not initialize WebHID for ${productName} device`);
-        throw error;
-    }
-        
-}
-
-function handleInputReport(event) {
-    const {data, device, reportId} = event;
-    
-    if ((device.productId !== devPID) || device.vendorId !== devVID) return;
-    
-    if (reportId == 0x4) {
-        updateInputDisplay(data);
+        console.error(error);
+        window.alert(`Could not connect to ${productName}. Make sure it is in Switch Pro mode, then try again.`);
     }
 }
 
-///////////////////
-// WebUSB logic //
-/////////////////
+async function initWebUSBDevice() {
+    if (!usbDevice.opened) await usbDevice.open();
+    if (!usbDevice.configuration) await usbDevice.selectConfiguration(1);
+    await usbDevice.claimInterface(1);
 
-async function initWebUSBDevice () {
-    try {
-        await usbDevice.open();
-        await usbDevice.selectConfiguration(1);
-        await usbDevice.claimInterface(1);
-
-        setInterval(() => {
-
-            try {
-                listen();
-            }
-            catch (err) {
-                console.log(err);
-            }
-        }, 50);
-        
+    const generation = ++listenGeneration;
+    void listen(generation);
     await loadAllSettings();
     await loadVersion();
-    }
-    catch (error) {
-        window.alert(`Could not initialize WebUSB for ${productName} device`);
-        throw error;
-    }
+    clearInterval(rawTimer);
+    rawWritePending = false;
+    rawTimer = setInterval(() => {
+        if (!usbDevice?.opened || rawWritePending) return;
+        rawWritePending = true;
+        void writeUSBCmd(WebUSBCmdMap.RAW_N64_GET)
+            .catch(error => console.warn("Live-input request failed", error))
+            .finally(() => { rawWritePending = false; });
+    }, LIVE_INPUT_INTERVAL_MS);
 }
 
-export const writeUSBCmd = async (cmd) => { await usbDevice.transferOut(2, new Uint8Array([cmd])); }
+export const writeUSBData = async (data) => {
+    const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
+    const queuedWrite = async () => {
+        if (!usbDevice?.opened) return;
+        const result = await usbDevice.transferOut(2, bytes);
+        if (result.status !== "ok")
+            throw new Error(`WebUSB write failed: ${result.status}`);
+    };
+    writeQueue = writeQueue.catch(() => {}).then(queuedWrite);
+    return writeQueue;
+};
 
+export const writeUSBCmd = async (cmd) => writeUSBData(new Uint8Array([cmd]));
 
-// Set connect and disconnect listeners
 // @ts-ignore
-navigator.usb.addEventListener("connect", (event) => {
-    console.log("Device plugged.");
-
+navigator.usb.addEventListener("disconnect", event => {
+    if (event.device !== usbDevice) return;
+    usbDevice = null;
+    ++listenGeneration;
+    clearInterval(rawTimer);
+    rawWritePending = false;
+    showConnected(false);
 });
 
-// @ts-ignore
-navigator.usb.addEventListener("disconnect", (event) => {
-    console.log("Device unplugged.");
-    if (event.device == usbDevice) {
-        usbDevice = null;
-        enableMenus(false);
-    }
-});
+async function listen(generation) {
+    while (usbDevice?.opened && generation === listenGeneration) {
+        try {
+            const result = await usbDevice.transferIn(2, 64);
+            if (result.status === "stall") {
+                await usbDevice.clearHalt("in", 2);
+                continue;
+            }
+            if (result.status !== "ok" || !result.data || result.data.byteLength === 0)
+                continue;
 
-const listen = async () => {
-    if (usbDevice != null) {
-        const result = await usbDevice.transferIn(2, 64);
+            const command = result.data.getUint8(0);
+            const minimumLength = minimumResponseLength[command] ?? 1;
+            if (result.data.byteLength < minimumLength) {
+                console.warn(`Ignoring short WebUSB response 0x${command.toString(16)} (${result.data.byteLength}/${minimumLength} bytes)`);
+                continue;
+            }
 
-        switch (result.data.getUint8(0)) {
-            case WebUSBCmdMap.CALIBRATION_STATUS_GET: {
-                placeCalibStatus(result.data);
-                break;
+            switch (command) {
+            case WebUSBCmdMap.CALIBRATION_STATUS_GET: placeCalibStatus(result.data); break;
+            case WebUSBCmdMap.NOTCHES_GET: placeNotches(result.data); break;
+            case WebUSBCmdMap.REMAP_GET: placeRemapping(result.data); break;
+            case WebUSBCmdMap.MAG_THRESH_GET: placeMagThresh(result.data); break;
+            case WebUSBCmdMap.GATE_LIMITER_GET: placeGateLimiter(result.data); break;
+            case WebUSBCmdMap.LPF_CUTOFF_GET: placeLpfCutoff(result.data); break;
+            case WebUSBCmdMap.COMMS_MODE_GET: placeCommsMode(result.data.getUint8(1)); break;
+            case WebUSBCmdMap.RAW_N64_GET: updateInputDisplayRaw(result.data); break;
+            case WebUSBCmdMap.FW_GET: placeVersion(result.data); break;
             }
-            case WebUSBCmdMap.NOTCHES_GET: {
-                placeNotches(result.data);
-                break;
-            }
-            case WebUSBCmdMap.REMAP_GET: {
-                placeRemapping(result.data);
-                break;
-            }
-            case WebUSBCmdMap.MAG_THRESH_GET: {
-                placeMagThresh(result.data);
-                break;
-            }
-            case WebUSBCmdMap.GATE_LIMITER_GET: {
-                placeGateLimiter(result.data);
-                break;
-            }
-            case WebUSBCmdMap.LPF_CUTOFF_GET: {
-                placeLpfCutoff(result.data);
-                break;
-            }
-            case WebUSBCmdMap.FW_GET: {
-                placeVersion(result.data);
-                break;
-            }
+        } catch (error) {
+            if (generation !== listenGeneration || !usbDevice?.opened) break;
+            console.warn("WebUSB read failed; retrying", error);
+            await sleep_ms(100);
         }
     }
 }
 
-export function setSaveIndicator() {
-    saveIndicatorSpan.style.display = "block";
-}
-
-function clearSaveIndicator() {
-    saveIndicatorSpan.style.display = "none";
-}
+export function setSaveIndicator() { saveIndicator.style.display = "inline-flex"; }
+function clearSaveIndicator() { saveIndicator.style.display = "none"; }
 
 export async function saveSettings() {
     await writeUSBCmd(WebUSBCmdMap.COMMIT_SETTINGS);
     clearSaveIndicator();
 }
 
-export async function updateFw() {
-    await writeUSBCmd(WebUSBCmdMap.UPDATE_FW);
-}
+export async function updateFw() { await writeUSBCmd(WebUSBCmdMap.UPDATE_FW); }
 
 export async function resetSettings() {
     await writeUSBCmd(WebUSBCmdMap.RESET_SETTINGS);
-    await sleep_ms(100);
+    await sleep_ms(150);
     await loadAllSettings();
     setSaveIndicator();
 }
 
+export async function setOperatingMode(mode) {
+    if (!Number.isInteger(mode) || mode < 0 || mode > 2) return;
+    await writeUSBData(new Uint8Array([WebUSBCmdMap.COMMS_MODE_SET, mode]));
+    setSaveIndicator();
+    const notice = document.getElementById("mode-notice");
+    notice.textContent = mode === 2
+        ? "Save, then reconnect. At plug-in, hold A for Switch Pro or B for XInput; either shortcut saves that mode."
+        : "The selected wired mode takes effect after reconnecting. Hold B while plugging in to select and save XInput directly.";
+}
+
+function placeCommsMode(mode) {
+    const select = /** @type {HTMLSelectElement} */ (document.getElementById("operating-mode"));
+    select.value = String(mode);
+}
+
 async function loadAllSettings() {
-    await writeUSBCmd(WebUSBCmdMap.CALIBRATION_STATUS_GET);
-    await sleep_ms(100);
-    await writeUSBCmd(WebUSBCmdMap.NOTCHES_GET);
-    await sleep_ms(50);
-    await writeUSBCmd(WebUSBCmdMap.MAG_THRESH_GET);
-    await sleep_ms(100);
-    await writeUSBCmd(WebUSBCmdMap.GATE_LIMITER_GET);
-    await sleep_ms(100);
-    await writeUSBCmd(WebUSBCmdMap.LPF_CUTOFF_GET);
-    await sleep_ms(100);
-    await setCommsMode(CommsMode.N64);
+    const commands = [
+        WebUSBCmdMap.CALIBRATION_STATUS_GET,
+        WebUSBCmdMap.NOTCHES_GET,
+        WebUSBCmdMap.MAG_THRESH_GET,
+        WebUSBCmdMap.GATE_LIMITER_GET,
+        WebUSBCmdMap.LPF_CUTOFF_GET,
+        WebUSBCmdMap.COMMS_MODE_GET,
+    ];
+    for (const command of commands) {
+        await writeUSBCmd(command);
+        await sleep_ms(35);
+    }
+    await setRemapMode(RemapMode.Switch);
 }
 
 async function loadVersion() {
     await writeUSBCmd(WebUSBCmdMap.FW_GET);
-    await sleep_ms(100);
 }
 
 function placeVersion(data) {
-    let versionElem = /** @type {HTMLInputElement} */ (document.getElementById(`version-text`)); 
-    let versionMaj = data.getUint8(2);
-    let versionMin = (data.getUint8(1) >> 4) & 0xF;
-    let versionPatch = data.getUint8(1) & 0xF;
-    let i = 0;
+    const versionElem = document.getElementById("version-text");
+    const major = data.getUint8(2);
+    const minor = (data.getUint8(1) >> 4) & 0xF;
+    const patch = data.getUint8(1) & 0xF;
     let commit = "";
-    while (data.getUint8(3 + i) != 0 && i < 64) {
-        commit += String.fromCharCode(data.getUint8(3+i));
-        i++;
-    }
-    if (commit == "") { commit = "?" }
-    versionElem.textContent = `Version: v${versionMaj}.${versionMin}.${versionPatch} (commit ${commit})`;
+    const commitLength = Math.min(60, data.byteLength - 3);
+    for (let i = 0; i < commitLength && data.getUint8(3 + i) !== 0; ++i)
+        commit += String.fromCharCode(data.getUint8(3 + i));
+    versionElem.textContent = `Firmware ${major}.${minor}.${patch} · ${commit || "local build"}`;
 }

@@ -1,6 +1,6 @@
-import { connect, saveSettings, resetSettings, updateFw } from "../../lib/modules/cntlr.js";
+import { connect, saveSettings, resetSettings, setOperatingMode, updateFw } from "../../lib/modules/cntlr.js";
 import { prevStep, nextStep, startCalib } from "../../lib/modules/zenith_calib.js";
-import { setCommsMode } from "../../lib/modules/zenith_remap.js";
+import { setRemapMode } from "../../lib/modules/zenith_remap.js";
 import { updateNotchPoint, updateMagThresh, updateGateLimiter, updateLpfCutoff } from "../../lib/modules/zenith_notch.js";
 import { updateDbgReporting } from "../../lib/modules/zenith_input.js";
 
@@ -12,7 +12,8 @@ window._fns = {
     startCalib,
     saveSettings,
     resetSettings,
-    setCommsMode,
+    setRemapMode,
+    setOperatingMode,
     updateNotchPoint,
     updateDbgReporting,
     updateMagThresh,

@@ -4,7 +4,6 @@
 import { WebUSBCmdMap, setSaveIndicator, writeUSBCmd } from "./cntlr.js";
 import { setAx, setAy, stickCard, stickDiag, updateCanvas } from "./zenith_input.js";
 
-let standardDiv = /** @type {HTMLDivElement} */ (document.getElementById("standard-div"));
 let calDiv = /** @type {HTMLDivElement} */ (document.getElementById("cal-div"));
 let calStepSpan = /** @type {HTMLSpanElement} */ (document.getElementById("cal-step"));
 let calIndicatorSpan = /** @type {HTMLSpanElement} */ (document.getElementById("calib-indicator-span"));
@@ -30,8 +29,7 @@ export function placeCalibStatus(data) {
     let step = data.getUint8(2);
     if (step != 0) {
         setCalStep(step);
-        calDiv.style.display = "block";
-        standardDiv.style.display = "none";
+        calDiv.style.display = "grid";
     } else if (!status) {
         setCalibIndicator(true);
     }
@@ -52,8 +50,7 @@ function setCalStep(calStep_in) {
 
 export async function startCalib() {
     setCalStep(1);
-    calDiv.style.display = "block";
-    standardDiv.style.display = "none";
+    calDiv.style.display = "grid";
 
     try
     {
@@ -71,7 +68,6 @@ export async function nextStep() {
         setCalibIndicator(false);
         setSaveIndicator();
         calDiv.style.display = "none";
-        standardDiv.style.display = "flex";
     } else {
         setCalStep(calStep+1);
     }

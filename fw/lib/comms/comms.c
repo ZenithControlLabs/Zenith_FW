@@ -8,6 +8,8 @@ void comms_init() {
     case COMMS_MODE_GAMECUBE: {
         // gamecube_init();
     } break;
+    case COMMS_MODE_XINPUT:
+        break;
     }
 }
 
@@ -20,5 +22,7 @@ void comms_task(uint32_t timestamp, btn_data_t *buttons,
     case COMMS_MODE_GAMECUBE: {
         // gamecube_comms_task(timestamp, buttons, analog);
     } break;
+    case COMMS_MODE_XINPUT:
+        break;
     }
 }

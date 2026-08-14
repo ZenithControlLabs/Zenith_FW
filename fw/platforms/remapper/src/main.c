@@ -24,6 +24,9 @@ void cb_zenith_init_hardware(void) {
         setup_gpio_input(i);
     }
     init_joybus();
+    /* Seed the button state for the A/B USB-mode shortcuts at boot. */
+    uint32_t boot_data = read_joybus_ctlr();
+    memcpy(&_the_data, &boot_data, sizeof(_the_data));
 }
 
 void cb_zenith_switch_controller_input(int index) {
