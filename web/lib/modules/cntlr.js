@@ -4,7 +4,7 @@
 import { sleep_ms } from "./utils.js";
 import { placeCalibStatus } from "./zenith_calib.js";
 import { updateInputDisplayRaw } from "./zenith_input.js";
-import { placeGateLimiter, placeLpfCutoff, placeMagThresh, placeNotches } from "./zenith_notch.js";
+import { placeGateLimiter, placeLpfCutoff, placeMagThresh, placeNotches, placeUsbStickScale } from "./zenith_notch.js";
 import { RemapMode, placeRemapping, setRemapMode } from "./zenith_remap.js";
 
 const filters = {filters: [{vendorId: 0x057E, productId: 0x2009}]};
@@ -29,6 +29,8 @@ export const WebUSBCmdMap = {
     COMMS_MODE_SET: 0x09,
     COMMS_MODE_GET: 0xA9,
     RAW_N64_GET: 0xAA,
+    USB_STICK_SCALE_SET: 0x0B,
+    USB_STICK_SCALE_GET: 0xAB,
     UPDATE_FW: 0xF1,
     COMMIT_SETTINGS: 0xF2,
     RESET_SETTINGS: 0xF3
@@ -50,6 +52,7 @@ const minimumResponseLength = {
     [WebUSBCmdMap.LPF_CUTOFF_GET]: 8,
     [WebUSBCmdMap.COMMS_MODE_GET]: 2,
     [WebUSBCmdMap.RAW_N64_GET]: 16,
+    [WebUSBCmdMap.USB_STICK_SCALE_GET]: 8,
 };
 
 const disconnected = /** @type {HTMLDivElement} */ (document.getElementById("disconnect-div"));
@@ -153,6 +156,7 @@ async function listen(generation) {
             case WebUSBCmdMap.LPF_CUTOFF_GET: placeLpfCutoff(result.data); break;
             case WebUSBCmdMap.COMMS_MODE_GET: placeCommsMode(result.data.getUint8(1)); break;
             case WebUSBCmdMap.RAW_N64_GET: updateInputDisplayRaw(result.data); break;
+            case WebUSBCmdMap.USB_STICK_SCALE_GET: placeUsbStickScale(result.data); break;
             case WebUSBCmdMap.FW_GET: placeVersion(result.data); break;
             }
         } catch (error) {
@@ -203,6 +207,7 @@ async function loadAllSettings() {
         WebUSBCmdMap.GATE_LIMITER_GET,
         WebUSBCmdMap.LPF_CUTOFF_GET,
         WebUSBCmdMap.COMMS_MODE_GET,
+        WebUSBCmdMap.USB_STICK_SCALE_GET,
     ];
     for (const command of commands) {
         await writeUSBCmd(command);

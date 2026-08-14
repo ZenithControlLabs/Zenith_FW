@@ -4,6 +4,20 @@ zenith_settings_t _settings[PROFILE_COUNT] = {0};
 volatile _Atomic int _profile = 0;
 volatile _Atomic bool _please_commit = false;
 
+/* Settings layout used before usb_stick_scale was added. */
+typedef struct {
+    uint32_t settings_ver;
+    comms_mode_t comms_mode;
+    calib_results_t calib_results;
+    stick_config_t stick_config;
+    btn_remap_profile_t btn_remap_profile_n64;
+    btn_remap_profile_t btn_remap_profile_gamecube;
+    btn_remap_profile_t btn_remap_profile_xinput;
+    btn_remap_profile_t btn_remap_profile_switch;
+    bool gate_limiter_enable;
+    uint8_t user_settings[USER_SETTINGS_SIZE];
+} zenith_settings_v5003_t;
+
 void settings_reset_to_factory() {
     // clang-format off
     const zenith_settings_t set = {
@@ -46,6 +60,7 @@ void settings_reset_to_factory() {
             .p = ZTH_SWITCH_REMAP_DEFAULT
         },
         .gate_limiter_enable = false,
+        .usb_stick_scale = 1.0f,
         .user_settings = {0}
     };
     // clang-format on
@@ -96,6 +111,32 @@ void settings_load() {
     const uint8_t *target_read =
         (const uint8_t *)(XIP_BASE + FLASH_OFFSET + (FLASH_SECTOR_SIZE));
     memcpy(_settings, target_read, sizeof(*_settings) * PROFILE_COUNT);
+
+    if (_settings[0].settings_ver == 0x5003) {
+        zenith_settings_v5003_t previous[PROFILE_COUNT];
+        memcpy(previous, target_read, sizeof(previous));
+        settings_reset_to_factory();
+        for (int i = 0; i < PROFILE_COUNT; ++i) {
+            _settings[i].comms_mode = previous[i].comms_mode;
+            _settings[i].calib_results = previous[i].calib_results;
+            _settings[i].stick_config = previous[i].stick_config;
+            _settings[i].btn_remap_profile_n64 =
+                previous[i].btn_remap_profile_n64;
+            _settings[i].btn_remap_profile_gamecube =
+                previous[i].btn_remap_profile_gamecube;
+            _settings[i].btn_remap_profile_xinput =
+                previous[i].btn_remap_profile_xinput;
+            _settings[i].btn_remap_profile_switch =
+                previous[i].btn_remap_profile_switch;
+            _settings[i].gate_limiter_enable =
+                previous[i].gate_limiter_enable;
+            memcpy(_settings[i].user_settings, previous[i].user_settings,
+                   USER_SETTINGS_SIZE);
+        }
+        debug_print("Migrated settings to add USB stick scaling.\n");
+        settings_inform_commit();
+        return;
+    }
 
     // Check for the integrity of our magic number.
     // If it doesn't match, settings structure has changed

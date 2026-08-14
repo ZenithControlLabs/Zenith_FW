@@ -112,7 +112,7 @@ h2 { margin-bottom: 0; font-size: 1.18rem; font-weight: 650; letter-spacing: -.0
 .notch-table strong { font-size: .82rem; }
 .notch-table input { width: 100%; min-width: 0; min-height: 36px; padding: 7px 9px; }
 .notch-header { color: var(--muted); background: rgba(255,255,255,.025); font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
-.tuning-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 18px; }
+.tuning-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 18px; }
 .tuning-grid > label { display: grid; gap: 5px; padding: 14px; border: 1px solid var(--line); border-radius: 13px; }
 .tuning-grid span { font-size: .84rem; font-weight: 650; }
 .tuning-grid small { color: var(--muted); font-size: .73rem; }

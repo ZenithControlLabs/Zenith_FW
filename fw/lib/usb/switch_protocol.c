@@ -24,6 +24,10 @@ static void pack_xy12(uint16_t x, uint16_t y, uint8_t out[3]) {
 }
 
 static uint16_t axis_to_switch(ax_t axis) {
+    float scale = _settings[_profile].usb_stick_scale;
+    if (!(scale >= 0.0f && scale <= 2.0f))
+        scale = 1.0f;
+    axis *= scale;
     float scaled = (axis + 1.0f) * 2047.5f;
     if (scaled < 0.0f)
         scaled = 0.0f;

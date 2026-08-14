@@ -107,6 +107,10 @@ typedef struct __attribute__((packed)) {
 } xinput_report_t;
 
 static int16_t axis_to_xinput(ax_t axis) {
+    float scale = _settings[_profile].usb_stick_scale;
+    if (!(scale >= 0.0f && scale <= 2.0f))
+        scale = 1.0f;
+    axis *= scale;
     float scaled = axis * 32767.0f;
     if (scaled > INT16_MAX) scaled = INT16_MAX;
     if (scaled < INT16_MIN) scaled = INT16_MIN;

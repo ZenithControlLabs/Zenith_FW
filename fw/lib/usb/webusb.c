@@ -235,6 +235,25 @@ void webusb_command_processor(uint8_t *data, const uint32_t data_size) {
         webusb_output_en = true;
     } break;
 
+    case WEBUSB_CMD_USB_STICK_SCALE_SET: {
+        if (data_size < 8)
+            break;
+        float scale;
+        memcpy(&scale, data + 4, sizeof(scale));
+        if (!isfinite(scale))
+            break;
+        if (scale < 0.0f) scale = 0.0f;
+        if (scale > 2.0f) scale = 2.0f;
+        _settings[_profile].usb_stick_scale = scale;
+    } break;
+
+    case WEBUSB_CMD_USB_STICK_SCALE_GET:
+        _webusb_out_buffer[0] = WEBUSB_CMD_USB_STICK_SCALE_GET;
+        memcpy(_webusb_out_buffer + 4, &_settings[_profile].usb_stick_scale,
+               sizeof(float));
+        webusb_output_en = true;
+        break;
+
     case WEBUSB_CMD_MAG_THRESH_SET: {
         debug_print("WebUSB: Got Magnitude Threshold SET command.\n");
         memcpy(&_settings[_profile].stick_config.mag_threshold, data + 4, sizeof(float));

@@ -14,6 +14,7 @@ The existing calibration and settings commands are unchanged. Added commands:
 | `09` | host → device | Set operating mode in byte 1 (`0` N64, `1` GameCube, `2` XInput) |
 | `A9` | host → device → host | Get operating mode; reply byte 1 is the mode |
 | `AA` | host → device → host | Get live input; bytes 1–4 are the exact corrected N64 poll report, byte 5 is the calibration flag, and little-endian float32 raw X/Y are at bytes 8/12 |
+| `0B` / `AB` | host → device / device → host | Set/get the shared Switch Pro and XInput stick scale; little-endian float32 factor at byte 4, clamped to `0.0`–`2.0` |
 
 Button-map target IDs are `0` N64, `1` GameCube, `2` XInput, and `3` Switch.
 Map entries remain physical-to-logical and use one-based destination bit

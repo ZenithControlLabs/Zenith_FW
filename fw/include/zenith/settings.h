@@ -13,7 +13,7 @@
 
 // Not in the userland-accessible zenith_cfg.h file because
 // we control the settings struct.
-static const uint32_t SETTINGS_VER = 0x5003;
+static const uint32_t SETTINGS_VER = 0x5004;
 
 #define ZTH_FW_MAJOR 2
 #define ZTH_FW_MINOR 0
@@ -32,6 +32,7 @@ typedef struct {
     btn_remap_profile_t btn_remap_profile_xinput;
     btn_remap_profile_t btn_remap_profile_switch;
     bool gate_limiter_enable;
+    float usb_stick_scale;
     // Always put at the end
     uint8_t user_settings[USER_SETTINGS_SIZE];
 } zenith_settings_t;

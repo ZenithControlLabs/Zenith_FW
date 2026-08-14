@@ -104,6 +104,20 @@ export async function updateGateLimiter(elemName) {
     setSaveIndicator();
 }
 
+export async function updateUsbStickScale(elemName) {
+    let percent = Number(elemName.value);
+    if (!Number.isFinite(percent)) percent = 100;
+    percent = Math.max(0, Math.min(200, percent));
+    elemName.value = percent.toFixed(0);
+
+    const buf = new ArrayBuffer(8);
+    const view = new DataView(buf);
+    view.setUint8(0, WebUSBCmdMap.USB_STICK_SCALE_SET);
+    view.setFloat32(4, percent / 100, true);
+    await writeUSBData(new Uint8Array(buf));
+    setSaveIndicator();
+}
+
 export function placeNotches(data) {
     for (let i = 0; i < 8; i++) {
         let notchpoint_input_x = /** @type {HTMLInputElement} */ (document.getElementById(`notch-${i}-x`));
@@ -133,5 +147,10 @@ export function placeGateLimiter(data) {
 export function placeLpfCutoff(data) {
     console.log(data);
     let lpf_cutoff_elem = /** @type {HTMLInputElement} */ (document.getElementById(`lpf-cutoff-hz`));    
-    lpf_cutoff_elem.value = (IntToFloat32(swap32(data.getUint32(4)))).toFixed(2);   
+    lpf_cutoff_elem.value = (IntToFloat32(swap32(data.getUint32(4)))).toFixed(2);
+}
+
+export function placeUsbStickScale(data) {
+    const elem = /** @type {HTMLInputElement} */ (document.getElementById("usb-stick-scale"));
+    elem.value = (data.getFloat32(4, true) * 100).toFixed(0);
 }
